@@ -11,6 +11,15 @@ export class AudioEngine {
   private running = false;
   private sensitivity = 1.0;
 
+  // Synthetic test oscillator
+  private oscNode: OscillatorNode | null = null;
+  private gainNode: GainNode | null = null;
+  private lfoNode: OscillatorNode | null = null;
+  private lfoGain: GainNode | null = null;
+  private testMode = false;
+  private testFreq = 440;
+  private testInterval: ReturnType<typeof setInterval> | null = null;
+
   async start(): Promise<void> {
     if (this.running) return;
     this.stream = await navigator.mediaDevices.getUserMedia({
@@ -34,6 +43,7 @@ export class AudioEngine {
   }
 
   stop(): void {
+    this.stopTest();
     this.running = false;
     this.stream?.getTracks().forEach((t) => t.stop());
     this.source?.disconnect();
@@ -43,6 +53,77 @@ export class AudioEngine {
     this.source = null;
     this.stream = null;
     this.energyHistory = [];
+  }
+
+  /** Start synthetic test oscillator — no mic needed.
+   *  frequency: sweep across a range for richer testing (default 80→4000Hz sweep) */
+  async startTest(frequency?: number): Promise<void> {
+    if (this.running) return;
+    this.testMode = true;
+    this.ctx = new AudioContext();
+    this.analyser = this.ctx.createAnalyser();
+    this.analyser.fftSize = 4096;
+    this.analyser.smoothingTimeConstant = 0.55;
+    this.analyser.minDecibels = -60;
+    this.analyser.maxDecibels = -10;
+
+    // Main oscillator
+    this.oscNode = this.ctx.createOscillator();
+    this.oscNode.type = 'sawtooth'; // rich harmonics = more interesting visuals
+    this.oscNode.frequency.value = frequency ?? 220;
+
+    // LFO for frequency modulation — creates sweeping, musical variation
+    this.lfoNode = this.ctx.createOscillator();
+    this.lfoNode.type = 'sine';
+    this.lfoNode.frequency.value = 0.15;
+    this.lfoGain = this.ctx.createGain();
+    this.lfoGain.gain.value = 200; // ±200Hz modulation
+    this.lfoNode.connect(this.lfoGain);
+    this.lfoGain.connect(this.oscNode.frequency);
+
+    // Master gain
+    this.gainNode = this.ctx.createGain();
+    this.gainNode.gain.value = 0.5;
+
+    this.oscNode.connect(this.gainNode);
+    this.gainNode.connect(this.analyser);
+    // Don't connect to destination — silent visual test
+    this.oscNode.start();
+    this.lfoNode.start();
+
+    this.freqData = new Uint8Array(this.analyser.frequencyBinCount);
+    this.timeData = new Uint8Array(this.analyser.fftSize);
+    this.running = true;
+
+    // If no specific frequency given, sweep through range for rich testing
+    if (frequency === undefined) {
+      this.testFreq = 80;
+      this.testInterval = setInterval(() => {
+        if (!this.oscNode) return;
+        this.testFreq = this.testFreq >= 3800 ? 80 : this.testFreq + 50;
+        this.oscNode.frequency.cancelScheduledValues(this.ctx!.currentTime);
+        this.oscNode.frequency.setValueAtTime(this.testFreq, this.ctx!.currentTime);
+      }, 400);
+    }
+  }
+
+  stopTest(): void {
+    if (this.testInterval) { clearInterval(this.testInterval); this.testInterval = null; }
+    this.oscNode?.stop();
+    this.oscNode?.disconnect();
+    this.lfoNode?.stop();
+    this.lfoNode?.disconnect();
+    this.lfoGain?.disconnect();
+    this.gainNode?.disconnect();
+    this.oscNode = null;
+    this.lfoNode = null;
+    this.lfoGain = null;
+    this.gainNode = null;
+    this.testMode = false;
+  }
+
+  isTestMode(): boolean {
+    return this.testMode;
   }
 
   setSensitivity(v: number): void {
@@ -109,6 +190,31 @@ export class AudioEngine {
     const spread = totalAmp > 0 ? Math.sqrt(spreadSum / totalAmp) : 0;
     const spreadNorm = Math.min(spread / (sampleRate / 4), 1); // normalize to 0-1
 
+    // Harmonicity strength (Reuter 2025): ratio of harmonic to total energy.
+    // Harmonic bins = multiples of fundamental (approximate by checking bins
+    // at integer multiples of the peak bin, ±1 bin tolerance)
+    const peakBin = totalAmp > 0 ? bins - 1 - [...freqBuf].reverse().indexOf(Math.max(...freqBuf)) : 0;
+    let harmonicSum = 0, totalSum = 0;
+    for (let i = 1; i < bins; i++) {
+      totalSum += freqBuf[i] * freqBuf[i];
+      if (peakBin > 0 && i > 1) {
+        // Check if this bin is near a harmonic of the fundamental
+        const ratio = i / peakBin;
+        const nearestHarm = Math.round(ratio);
+        if (nearestHarm >= 2 && nearestHarm <= 10 && Math.abs(ratio - nearestHarm) < 0.08) {
+          harmonicSum += freqBuf[i] * freqBuf[i];
+        }
+      }
+    }
+    const harmonicity = totalSum > 0 ? Math.min(harmonicSum / totalSum * 3, 1) : 0;
+
+    // Percussive loudness (Reuter 2025): high-frequency transient energy.
+    // Sharp onsets in high bands → percussive, rough textures.
+    const percussiveHighBins = Math.floor(bins * 0.6);
+    let percussiveSum = 0;
+    for (let i = percussiveHighBins; i < bins; i++) percussiveSum += freqBuf[i];
+    const percussive = Math.min(percussiveSum / ((bins - percussiveHighBins) * 255) * 2 * gain, 1);
+
     // Spectral flatness
     let geoSum = 0;
     let ariSum = 0;
@@ -156,6 +262,8 @@ export class AudioEngine {
       highEnergy,
       flatness,
       spreadNorm,
+      harmonicity,
+      percussive,
       fftSize,
       sampleRate,
     };

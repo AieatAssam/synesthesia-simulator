@@ -9,6 +9,8 @@ export interface AudioData {
   highEnergy: number;
   flatness: number;
   spreadNorm: number;
+  harmonicity: number;   // Reuter 2025: harmonic-to-total energy ratio
+  percussive: number;     // Reuter 2025: high-frequency transient energy
   fftSize: number;
   sampleRate: number;
 }

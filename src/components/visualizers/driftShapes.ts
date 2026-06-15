@@ -31,6 +31,8 @@ export function renderDriftShapes(
   const vol = audio.volume * sens;
   const centroidNorm = Math.min(audio.centroid / 4000, 1);
   const spreadNorm = audio.spreadNorm;
+  const harmonicity = audio.harmonicity;     // Reuter 2025: harmonic→saturated
+  const percussive = audio.percussive;        // Reuter 2025: percussive→rough, angular
 
   // Spawn based on sustained energy — more spawns from mid energy (body of sound)
   const spawnInterval = 0.12 / (vol + 0.04);
@@ -46,11 +48,17 @@ export function renderDriftShapes(
     const { h, s, l } = freqToHue(freq, palette);
     const pitchNorm = Math.min(freq / 4000, 1);
 
+    // Reuter 2025: harmonicity drives saturation. More harmonic (flute, violin)
+    // → more saturated. More percussive (drums, plucks) → less saturated, lighter.
+    const harmonicSatBoost = harmonicity * 25;
+    const percussiveLighten = percussive * 15;
+
     // Spatial mapping (Chiou 2013 + Ward 2006):
-    // Bass = bottom center, Mid = spread horizontally, Treble = upper edges
-    // Pitch maps to Y, stereo-like positioning from frequency bin index
-    const px = cx + (pitchNorm - 0.5) * width * 0.5 + (Math.random() - 0.5) * width * 0.2;
-    const py = cy - height * 0.3 + pitchNorm * height * 0.55 + (Math.random() - 0.5) * 20;
+    // High pitch = higher in space (Ward 2006), bass = lower, grounded.
+    // Wide horizontal spread across full canvas width.
+    // Canvas Y=0 is TOP, so high pitch → low Y value.
+    const px = cx + (pitchNorm - 0.5) * width * 0.7 + (Math.random() - 0.5) * width * 0.3;
+    const py = cy + height * 0.25 - pitchNorm * height * 0.55 + (Math.random() - 0.5) * height * 0.1;
 
     // Timbre-responsive shape selection:
     // Low centroid (dark) → rounder (circle/oval, 0 sides)
@@ -74,8 +82,8 @@ export function renderDriftShapes(
       life: 0,
       maxLife: 2.5 + Math.random() * 5.0 + vol * 3,
       hue: h,
-      saturation: s,
-      lightness: l + 8 + centroidNorm * 10,
+      saturation: Math.min(s + harmonicSatBoost, 100),
+      lightness: Math.min(l + 8 + centroidNorm * 10 + percussiveLighten, 90),
       sides,
       pulse: Math.random() * Math.PI * 2,
       pulseSpeed: 1.5 + Math.random() * 3 + vol * 4,
@@ -91,11 +99,14 @@ export function renderDriftShapes(
     sh.life += dt;
     if (sh.life >= sh.maxLife) { shapes.splice(i, 1); continue; }
 
-    // Parallax drift: deeper shapes (bass, low pitch) move slower
-    const pitchNorm = Math.min(sh.hue > 180 ? 0.3 : 0.7, 1);
-    const driftSpeed = 0.3 + pitchNorm * 0.7;
-    sh.y += dt * Math.sin(sh.life * 0.6) * 6 * driftSpeed;
-    sh.x += dt * Math.cos(sh.life * 0.4) * 4 * driftSpeed;
+    // Parallax drift: bass shapes drift slowly (gravitational, grounded),
+    // treble shapes dart around faster (airy, electric).
+    // Compute pitchNorm from stored hue (which was mapped from freq→note→hue).
+    // Low hues (red, ~0°) = bass, high hues (violet, ~270°) = treble.
+    const storedPitchNorm = Math.min((sh.hue % 360) / 270, 1);
+    const driftAmp = 40 + storedPitchNorm * 100; // px/sec
+    sh.x += dt * Math.sin(sh.life * 1.2 + storedPitchNorm) * driftAmp * 0.6;
+    sh.y += dt * Math.cos(sh.life * 0.9 + storedPitchNorm) * driftAmp * 0.4;
     sh.rotation += sh.rotSpeed * dt;
     sh.pulse += sh.pulseSpeed * dt;
 

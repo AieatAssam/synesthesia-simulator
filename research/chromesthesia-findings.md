@@ -344,3 +344,43 @@ Multiple accounts converge on timbre (instrument quality) being at least as impo
 - Scintillation dots travel along active filaments at high volume
 - Parallax depth: bass filaments move slower (deeper in space), treble faster (closer)
 - Spawns on onsets and sustained loud sections — creates the "architecture" Tori Amos describes
+
+---
+
+## Reuter et al. (2025) — Timbre→Color Rules via Instrument Morphing
+
+**"Rainbows in my ears — Synesthetic color perception with partial-reduced and morphed musical instrument timbres"** — Reuter, C., Siddiq, S., Jewanski, J., Oehler, M., & Czedik-Eysenberg, I. (2025). *Frontiers in Psychology*, 16:1697918. DOI: [10.3389/fpsyg.2025.1697918](https://doi.org/10.3389/fpsyg.2025.1697918)
+
+### Key Findings
+- **First systematic study** of how timbre manipulations influence color perception in timbre-color synesthetes
+- **Partial reduction** (removing harmonics from an instrument tone) → **decreased saturation, increased lightness** — especially for flute, oboe, violin, piano
+- **Timbre morphing** (cross-fading between instruments) → **progressive, continuous color shifts** from the starting instrument's color to the target instrument's color
+- Three audio features predict timbre-induced colors across individuals:
+  1. **Spectral centroid** — primary driver of color hue
+  2. **Harmonicity strength** — higher harmonicity → more saturated, richer colors
+  3. **Percussive loudness** — high-frequency transient energy → lighter, less saturated colors; rougher textures
+- Generalizable rules exist: timbre→color is NOT purely idiosyncratic — it follows predictable acoustic patterns
+
+### Design Impact
+- **Harmonicity** added as audio feature — drives saturation across all visualizers
+  - Harmonic sounds (flute, bowed strings, clean vocals) → **rich, saturated colors**
+  - Inharmonic/percussive sounds (drums, plucks, noise) → **lighter, pastel colors**
+- **Percussive loudness** added — drives lightness and texture roughness
+  - Sharp transients → lighter colors, angular edges (in DriftShapes), more scattered particles (in SmokeTrails)
+- **Spectral centroid** confirmed as primary hue driver — already central to our engine
+- The progressive/continuous nature of timbre→color shifts supports our smooth interpolation approach (vs discrete mappings)
+
+---
+
+## Koenig et al. (2026) — Sound Frequency → Bodily Location
+
+**"Sound frequency predicts the bodily location of auditory-induced tactile sensations in synesthetic and ordinary perception"** — Koenig, S., et al. (2026). *Neuroscience of Consciousness*, niaf064. DOI: [10.1093/nc/niaf064](https://doi.org/10.1093/nc/niaf064)
+
+### Key Finding
+Sound frequency systematically maps to bodily locations in sound-touch synesthetes — lower frequencies felt lower on body, higher frequencies felt higher. This spatial-frequency mapping exists in non-synesthetes too (weaker), confirming that crossmodal spatial correspondences are universal but amplified in synesthetes.
+
+### Design Impact
+- Reinforces our pitch→Y positioning across visualizers
+- Low frequencies grounded (bottom of canvas) → heavier, slower visual elements
+- High frequencies elevated (top of canvas) → lighter, faster visual elements
+- Universal mapping confirms our spatial strategy is perceptually valid for all users

@@ -3,6 +3,7 @@ import { Sparkles } from 'lucide-react';
 import { Canvas } from './components/Canvas';
 import { audioEngine } from './components/AudioEngine';
 import { MicButton } from './components/ui/MicButton';
+import { TestToneButton } from './components/ui/TestToneButton';
 import { ModeSelector } from './components/ui/ModeSelector';
 import { SensitivitySlider } from './components/ui/SensitivitySlider';
 import { PaletteSelector } from './components/ui/PaletteSelector';
@@ -13,12 +14,16 @@ import type { VisualParams } from './components/visualizers/types';
 export default function App() {
   const [active, setActive] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [testActive, setTestActive] = useState(false);
+  const [testLoading, setTestLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<VisualParams['mode']>('full');
   const [sensitivity, setSensitivity] = useState(1.0);
   const [palette, setPalette] = useState<VisualParams['palette']>('synesthete');
 
   const handleStart = useCallback(async () => {
+    // Stop test tone if running
+    if (testActive) handleTestStop();
     setError(null);
     setLoading(true);
     try {
@@ -44,6 +49,27 @@ export default function App() {
     setActive(false);
   }, []);
 
+  const handleTestStart = useCallback(async () => {
+    // Stop mic if running
+    if (active) handleStop();
+    setError(null);
+    setTestLoading(true);
+    try {
+      await audioEngine.startTest();
+      audioEngine.setSensitivity(sensitivity);
+      setTestActive(true);
+    } catch (err: any) {
+      setError(`Test tone error: ${err?.message || 'Unknown'}`);
+    } finally {
+      setTestLoading(false);
+    }
+  }, [sensitivity]);
+
+  const handleTestStop = useCallback(() => {
+    audioEngine.stop();
+    setTestActive(false);
+  }, []);
+
   const handleSensitivity = useCallback((v: number) => {
     setSensitivity(v);
     audioEngine.setSensitivity(v);
@@ -66,12 +92,12 @@ export default function App() {
       {/* Canvas */}
       <div className="flex-1 min-h-0 relative">
         <Canvas
-          active={active}
+          active={active || testActive}
           mode={mode}
           sensitivity={sensitivity}
           palette={palette}
         />
-        {!active && !loading && !error && (
+        {!active && !testActive && !loading && !testLoading && !error && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="text-center text-muted-foreground/40">
               <Sparkles className="h-12 w-12 mx-auto mb-3 opacity-20" />
@@ -94,8 +120,9 @@ export default function App() {
 
       {/* Controls */}
       <div className="shrink-0 border-t border-white/5 px-4 py-3 space-y-3">
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-center gap-3">
           <MicButton active={active} loading={loading} onStart={handleStart} onStop={handleStop} />
+          <TestToneButton active={testActive} loading={testLoading} onStart={handleTestStart} onStop={handleTestStop} />
         </div>
 
         <div className="space-y-2">
