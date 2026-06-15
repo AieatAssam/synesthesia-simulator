@@ -297,3 +297,50 @@ Two experiments recreating synesthetic experiences in VR (OpenBrush). Six synest
 | "Shimmering" / "sparkly" | Fast flicker on stardust particles (8-20 Hz sparkle oscillation) |
 | "Floating away" / "directional movement" | Particle drift with damped velocity, outward+rotational flow |
 | Higher pitch = higher in space | DriftShapes Y position mapped to frequency (Ward et al. 2006) |
+
+---
+
+## Chiou et al. (2013) — Geometric Objects at Specific Locations
+
+**"Beyond colour perception: Auditory–visual synaesthesia induces experiences of geometric objects in specific locations"** — Chiou, R., Stelter, M., & Rich, A.N. (2013). *Cortex*, 49(6).
+
+### Key Finding
+Auditory-visual synesthetes don't just see colors — they see **specific geometric shapes at specific spatial locations**. This is not random: the position, shape, and color are all part of the concurrent experience. Shapes include circles, triangles, diamonds, and more complex polygons.
+
+### Design Impact
+- **DriftShapes** places geometric objects at frequency-mapped positions rather than random locations
+- Bass frequencies → lower screen positions; treble → upper positions (Ward et al. 2006)
+- Shape type (round vs angular) is now driven by spectral centroid — darker timbres produce rounder shapes, brighter timbres produce more angular ones
+
+---
+
+## Timbre → Color & Shape Mappings (Bernstein, Ellington, Messiaen)
+
+Multiple accounts converge on timbre (instrument quality) being at least as important as pitch:
+
+- **Duke Ellington**: trumpet = "dark blue," alto saxophone = "light blue satin" — different instruments playing same note = different colors
+- **Leonard Bernstein**: experienced "timbre to color" — would stop orchestras when the timbre changed because "the color changed"
+- **Olivier Messiaen**: constructed "color chords" with specific timbre-color mappings. Mode 2 = "blue-violet with gold and red"
+- **Franz Liszt**: "Gentlemen, a little bluer, if you please... That is a deep violet"
+
+### Design Impact
+- **Spectral centroid** now drives visual quality across all layers:
+  - Low centroid (dark timbre — cello, bass) → rounder shapes, slower animation, deeper colors
+  - High centroid (bright timbre — flute, violin) → more angular shapes, faster animation, lighter colors
+- **Spectral spread** (variance around centroid) modulates texture: high spread (noisy/percussive) → rougher edges, dashed ring patterns
+- **Mid-energy** band (250Hz–2kHz) now drives the "body" of visual response — the main presence of ripples and smoke
+
+---
+
+## Light Filament Architecture (Tori Amos, Deni Simon)
+
+- **Tori Amos** (2005): "The song appears as light filament once I've cracked it... architecture of color-and-light. I've never seen the same light creature in my life."
+- **Deni Simon** (via Cytowic): "lines moving in color, often metallic with height, width, and, most importantly, depth"
+- Savickaite (2023) P1: "stars in your eyes... the stars effect brush was the best representation"
+
+### Design Impact
+- New **LightFilament** layer: smooth Bézier-curved strands that trace through the visual field
+- Three-pass rendering for glow: outer faint halo → mid glow → bright thin core
+- Scintillation dots travel along active filaments at high volume
+- Parallax depth: bass filaments move slower (deeper in space), treble faster (closer)
+- Spawns on onsets and sustained loud sections — creates the "architecture" Tori Amos describes
