@@ -110,17 +110,19 @@ getByteFrequencyData  getByteTimeDomainData  RMS/Spectral Analysis
 ```
 requestAnimationFrame loop
     ↓
-AudioEngine.getSnapshot() → AudioData { frequencies, waveform, volume, centroid, onsets }
+AudioEngine.getSnapshot() → AudioData { frequencies, waveform, volume, centroid, onsets, lowEnergy }
     ↓
-┌──────────────────────────────────────┐
-│  Layer 1: renderBackground()         │  ← Klüver form constants
-│  Layer 2: renderAurora()             │  ← Frequency spectrum rainbow band
-│  Layer 3: renderWaveform()           │  ← Oscilloscope metallic lines
-│  Layer 4: renderParticles()          │  ← Onset-triggered firework bursts
-│  Layer 5: renderKaleidoscope()       │  ← Geometric symmetry overlay
-└──────────────────────────────────────┘
+┌────────────────────────────────────────────────┐
+│  UNIFIED VISUAL FIELD (persistent, evolving)    │
+│                                                 │
+│  Render back → front:                           │
+│  Layer 1: RippleField     ← expanding rings     │
+│  Layer 2: DriftShapes     ← 3D-positioned forms │
+│  Layer 3: SmokeTrails     ← cloud/ember texture │
+│  Layer 4: Stardust        ← sparkle particles   │
+└────────────────────────────────────────────────┘
     ↓
-Single Canvas2D context (composited in order)
+Single Canvas2D — gentle clearing (α=0.05) for persistent trails
 ```
 
 ### Technology Stack
@@ -142,35 +144,44 @@ The visual style (gradients, lines, particles, geometric shapes) maps naturally 
 
 ## Visual Layers
 
-### Layer 1: Background — Klüver Form Constants
+All layers paint into a **single unified visual field** with persistence. The canvas clears at alpha=0.05 per frame — elements leave visible trails lasting ~20 frames (330ms at 60fps). This captures the synesthetic quality of colors that "persist while sound continues and fade when sound stops."
 
-Slow-moving atmospheric background motifs drawn from Klüver's (1926) documented hallucinatory form categories: tunnels (concentric circles), spirals (logarithmic), and honeycombs (hexagonal tilings). Rendered at 10–20% opacity. Responds to low-frequency energy and slow volume envelope. Provides the "space" in which other visuals appear.
+### Design Philosophy
 
-**Research basis:** Klüver (1926) identified four recurring geometric categories in hallucinations, later confirmed to appear in chromesthetic experiences (Cytowic 2018).
+Grounded in **Savickaite et al. (2023)**: synesthetes using VR to draw their experiences emphasized that texture, movement, 3D depth, and persistence are essential — 2D color pickers and static representations miss the entire phenomenology.
 
-### Layer 2: Aurora — Frequency Spectrum Band
+| Synesthete Description | Visual Element | Source |
+|----------------------|---------------|--------|
+| "Stars in your eyes" | Stardust sparkle particles with glow halos | P1, Savickaite 2023 |
+| "Pulsating outwards... gravitational vacuum" | RippleField concentric rings + central glow | P1, Savickaite 2023 |
+| "This smoke will come in really helpful" | SmokeTrails soft radial blob particles | P1, Savickaite 2023 |
+| "Big yellow shape... orange line in the middle" | DriftShapes persistent polygons with inner strokes | P1, Savickaite 2023 |
+| "3D shapes moving up or down depending on pitch" | DriftShapes vertical position mapped to frequency | P4, Savickaite 2023 |
+| "Shimmering" / "sparkly" / "electric bits" | Stardust cross-shaped sparkles with 8-20Hz flicker | P1, Savickaite 2023 |
 
-A flowing horizontal band mapping the entire frequency spectrum from bass (left, ~20Hz) to treble (right, ~20kHz) as a continuous color gradient. Each frequency bin's amplitude controls the "height" of that column in the band. Colors follow Itoh's rainbow theory: red at low frequencies, transitioning through yellow, green, and blue to violet at the highest frequencies.
+### Layer 1: RippleField — "Gravitational Vacuum"
 
-**Research basis:** Itoh et al. (2017) demonstrated rainbow-like hue ordering across pitch classes in 33 subjects. The "aurora" metaphor reflects descriptions of synesthetic colors as flowing, atmospheric, and band-like rather than discrete.
+Expanding concentric rings triggered by audio energy and onsets. Each ring has a hue mapped to its dominant frequency and fades gradually. A central radial glow pulses with low-frequency energy. Captures the Klüver form constants (tunnels, spirals) and P1's "gravitational vacuum" quality.
 
-### Layer 3: Waveform — Oscilloscope Lines
+**Research basis:** Klüver (1926) form constants; P1's descriptions of "pulsating outwards as if it's churning round" and "in the middle it's slower, on the outside it moves a lot more" (Savickaite et al. 2023).
 
-Waving, "metallic" lines tracing the raw time-domain audio waveform. Multiple lines at slight offsets create depth. Gradient strokes (light edge + darker core) produce the "metallic" quality described by Deni Simon. Line color shifts in real-time based on spectral centroid (a timbre indicator) — different sounds produce different line hues even at the same pitch.
+### Layer 2: DriftShapes — "3D Shapes Moving in Space"
 
-**Research basis:** Deni Simon's firsthand account (via Cytowic): "waving lines — like oscilloscope configurations — lines moving in color, often metallic with height, width, and, most importantly, depth."
+Persistent geometric shapes (circles, triangles, diamonds, pentagons) that appear at frequency-mapped positions, drift slowly, rotate, and pulse. Pitch maps to vertical position (higher pitch = higher on screen) per Ward et al. (2006). Shapes persist for 2–10 seconds, fading in/out with hold period.
 
-### Layer 4: Particles — "Fireworks"
+**Research basis:** P1's "big yellow shape and then like a sort of orange line in the middle"; P2's "sideways eye shape" and "general like hard shape"; P4's "three-dimensional shapes specific to the instrument" (Savickaite et al. 2023). Kandinsky's abstract forms in motion.
 
-Transient particle bursts triggered by detected audio onsets (sudden increases in energy). Each onset spawns particles that burst outward with gravity, air friction, and fade over 1–3 seconds. Colors are mapped to the dominant frequency at the onset moment. Particle count scales with onset intensity.
+### Layer 3: SmokeTrails — Cloud & Ember Texture
 
-**Research basis:** Cytowic's "something like fireworks" description (1989, 2009): voice, music, and environmental sounds "trigger color and firework shapes that arise, move around, and then fade when the sound ends."
+Soft radial-gradient blob particles that drift, slow down, and fade. Each particle uses a radial gradient from bright core to transparent edge, creating smoke/cloud visual quality. Some particles feature bright "ember" cores. Flow lines trace curved paths with metallic styling. Particle spawning is weighted by frequency amplitude — louder bins produce more particles.
 
-### Layer 5: Kaleidoscopic Overlay
+**Research basis:** P1's "this smoke will actually come in really helpful because a lot of my synaesthesia looks kind of like that," "embers would still be going over the top," "a little bit fuzzy"; P2's "smokiness" and "cloudiness" descriptions; Deni Simon's "waving lines — like oscilloscope configurations — lines moving in color, often metallic" (Savickaite et al. 2023; Cytowic 1989).
 
-Geometric radial symmetry (6–12 fold) applied to waveform segments, creating mandala-like patterns. Fades in during moments of high spectral flatness — when many frequencies are active simultaneously (rich chords, dense textures). Rendered at low opacity (15–25%) as a subtle enhancement.
+### Layer 4: Stardust — "Stars in Your Eyes"
 
-**Research basis:** Tori Amos's "kaleidoscope" description (2005): "try to imagine the best kaleidoscope ever — after the initial excitement, you start to focus on each element's stunning original detail."
+**Hypersensitive** sparkle particles that spawn even at very low volumes. Three spawning modes: ambient (always present, ~1-25 particles/frame), onset bursts (concentrated explosions of 30+ particles), and low-frequency swirls (orbital stardust near center). Each particle has a bright core, radial glow halo, and cross-shaped sparkle with fast flicker (8–20Hz oscillation).
+
+**Research basis:** P1's "stars in your eyes" and "I never got to represent my experiences so clearly" (on the stars brush); "yellow and sparkly" for birdsong; "electric bits" for plucked guitar; Cytowic's "something like fireworks" (Savickaite et al. 2023; Cytowic 1989, 2009).
 
 ---
 
@@ -313,6 +324,7 @@ virtual-synesthesia/
 6. Cao, Y. & Ueda, S. (2025). "One- or two-step? New insights into two-step hypothesis and rainbow-like theory for pitch class-color synesthesia."
 7. Niccolai, V., Jennes, J., Stoerig, P. & Van Leeuwen, T.M. (2012). Study on voice-related chromesthesia.
 8. Simner, J. et al. (2006). Prevalence study. *Perception*.
+9. **Savickaite, S., McNaughton, D., Gaigalas, R., & Ward, J. (2023).** "Using immersive virtual reality to recreate the synaesthetic experience." *i-Perception*, 14(3). [PMC10478570](https://pmc.ncbi.nlm.nih.gov/articles/PMC10478570/) — participants drew their synesthetic experiences in 3D VR; revealed critical importance of texture, movement, and persistence.
 
 ### Books
 - Cytowic, R.E. (1989). *Synesthesia: A Union of the Senses*.

@@ -230,3 +230,70 @@ Heinrich Klüver (1920s) identified 4 recurring form categories in hallucination
 - Sabaneyev, L. (1911). Scriabin's key-color system.
 - Galeyev, B.M. & Vanechkina, I.L. (2001). "Was Scriabin a Synesthete?" *Leonardo*.
 - Klüver, H. (1926). Form constants in hallucinations.
+
+---
+
+## Savickaite et al. (2023) — VR Recreation of Synesthetic Experience
+
+**"Using immersive virtual reality to recreate the synaesthetic experience"** — Savickaite, S., McNaughton, D., Gaigalas, R., & Ward, J. (2023). *i-Perception*, 14(3). [PMC10478570](https://pmc.ncbi.nlm.nih.gov/articles/PMC10478570/)
+
+### Overview
+Two experiments recreating synesthetic experiences in VR (OpenBrush). Six synesthetes in Experiment 1 ("VR-by-proxy"), three audiovisual synesthetes in Experiment 2 (self-drawing in VR). Key finding: VR dramatically outperforms 2D color pickers for capturing the richness of auditory-visual synesthesia — movement, texture, 3D space, and animation are essential.
+
+### Why VR/3D matters
+- **P1**: "This is the best I've ever gotten to be honest. This is the best I've ever seen that can describe the sort of stars in your eyes… I never got to represent my experiences so clearly."
+- **P2**: "There's so much more that I can convey and describe about it because I'm able to use like a 3D space rather than trying to draw something on a piece of paper. So yeah, a massive advantage."
+- **P3**: "You need to just draw what I can see. Pen and paper are too small and doesn't get the same accurate representation."
+
+### Specific Visual Descriptions (used in Virtual Synesthesia visualizers)
+
+**Texture & Material Qualities:**
+- "This smoke will actually come in really helpful because a lot of my synaesthesia looks kind of like that" (P1)
+- "The embers would still be going over the top as well. You can see the embers through it" (P1)
+- "a little bit fuzzy" (P1)
+- "smokiness" and "cloudiness" of sensations (P2)
+- "stony, rough" textures (P2)
+- "as if it had been cut by a serrated knife" (P3)
+- "yellow and sparkly" (P1 — birdsong)
+- "electric bits" (P1 — guitar sounds)
+
+**Movement Patterns:**
+- "in the middle it's slower, but on the outside it moves a lot more, almost like a sort of gravitational vacuum" (P1)
+- "pulsating outwards as if it's churning round" (P1)
+- "floating away from the shape… starts strong and it gets quieter" (P2)
+- "circular motion" was "quite important" (P1)
+- Directional movement, swaying, "solid" slow movement
+- Smoke-like, serrated/wave-like movements
+
+**Shape & Spatial Characteristics:**
+- "big yellow shape and then like a sort of orange line in the middle" (P1)
+- "sideways eye shape in the middle" (P2)
+- "the general like hard shape" (P2)
+- Three-dimensional shapes specific to the instrument (P4)
+- Shapes moving up or down in space depending on pitch (P4)
+- Colors and shapes had "specific placements in space" (P3)
+
+**Color Patterns:**
+- Different shades of a color within the same experience (e.g., different shades of blue for electric bits)
+- Silver/metallic for guitar scratches
+- Blue tones with animated directional movement for cars passing
+- Specific colors tied to specific sounds — consistent within individuals
+
+### How This Informs Virtual Synesthesia Design
+1. **Persistence**: Synesthetic experiences "persist while sound continues and fade when sound stops" — our canvas uses alpha=0.05 clearing for rich trails
+2. **Texture over geometry**: Smoke, embers, cloudiness, fuzz — not clean geometric lines
+3. **Movement is essential**: Pulsating, floating, churning, gravitational pull — all layers animate continuously
+4. **Unified 3D-like space**: Elements exist in a shared depth field, not as separate overlays
+5. **Sensitivity to quiet**: Even subtle sounds produce "sparkly," "electric," "shimmering" qualities — stardust spawns at very low volumes
+
+### Design Vocabulary Mapped to Research
+
+| Synesthete Description | Virtual Synesthesia Visual |
+|----------------------|---------------------------|
+| "Stars in your eyes" | Stardust particles — bright core + cross-shaped sparkle + glow halo |
+| "Pulsating outwards" / "gravitational vacuum" | RippleField — expanding concentric rings + central radial glow |
+| "Smoke" / "cloudiness" / "embers" | SmokeTrails — soft radial gradient blobs with ember cores, drift + fade |
+| "3D shapes moving in space" | DriftShapes — persistent polygons/circles, pitch-mapped vertical position, pulse + rotation |
+| "Shimmering" / "sparkly" | Fast flicker on stardust particles (8-20 Hz sparkle oscillation) |
+| "Floating away" / "directional movement" | Particle drift with damped velocity, outward+rotational flow |
+| Higher pitch = higher in space | DriftShapes Y position mapped to frequency (Ward et al. 2006) |

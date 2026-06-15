@@ -2,11 +2,10 @@ import { useRef, useEffect, useCallback } from 'react';
 import type { VisualParams } from './visualizers/types';
 import { audioEngine } from './AudioEngine';
 import { useAnimationFrame } from '../hooks/useAnimationFrame';
-import { renderBackground } from './visualizers/backgroundLayer';
-import { renderAurora } from './visualizers/auroraLayer';
-import { renderWaveform } from './visualizers/waveformLayer';
-import { renderParticles } from './visualizers/particleLayer';
-import { renderKaleidoscope } from './visualizers/kaleidoscopeLayer';
+import { renderRippleField } from './visualizers/rippleField';
+import { renderSmokeTrails } from './visualizers/smokeTrails';
+import { renderStardust } from './visualizers/stardustField';
+import { renderDriftShapes } from './visualizers/driftShapes';
 
 interface Props {
   active: boolean;
@@ -19,7 +18,6 @@ export function Canvas({ active, mode, sensitivity, palette }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dimsRef = useRef({ width: 0, height: 0 });
 
-  // Resize handler
   const updateSize = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -41,7 +39,6 @@ export function Canvas({ active, mode, sensitivity, palette }: Props) {
     return () => window.removeEventListener('resize', updateSize);
   }, [updateSize]);
 
-  // Clear canvas when inactive
   useEffect(() => {
     if (!active) {
       const canvas = canvasRef.current;
@@ -55,7 +52,6 @@ export function Canvas({ active, mode, sensitivity, palette }: Props) {
     }
   }, [active]);
 
-  // Render loop
   useAnimationFrame((dt) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -70,16 +66,18 @@ export function Canvas({ active, mode, sensitivity, palette }: Props) {
 
     const params: VisualParams = { mode, sensitivity, palette, width, height };
 
-    // Clear with subtle fade for persistence
-    ctx.fillStyle = 'rgba(10, 10, 15, 0.25)';
+    // PERSISTENCE: gentle clearing creates trails and afterimages.
+    // Synesthetic experiences persist while sound continues and fade gradually.
+    // alpha=0.05 means elements last ~20 frames (330ms at 60fps) — visible trails.
+    ctx.fillStyle = 'rgba(5, 5, 10, 0.05)';
     ctx.fillRect(0, 0, width, height);
 
-    // Render layers back-to-front
-    renderBackground(ctx, audio, params, dt);
-    renderAurora(ctx, audio, params, dt);
-    renderWaveform(ctx, audio, params, dt);
-    renderParticles(ctx, audio, params, dt);
-    renderKaleidoscope(ctx, audio, params, dt);
+    // Unified visual field — all layers paint into the same space.
+    // Back to front: ripples (deepest) → shapes → smoke → stardust (surface)
+    renderRippleField(ctx, audio, params, dt);
+    renderDriftShapes(ctx, audio, params, dt);
+    renderSmokeTrails(ctx, audio, params, dt);
+    renderStardust(ctx, audio, params, dt);
   }, active);
 
   return (
