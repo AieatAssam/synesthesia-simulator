@@ -71,7 +71,7 @@ export function renderLightFilaments(
       points,
       hue: h,
       saturation: s,
-      lightness: l + 20,
+      lightness: Math.min(l + 5, 58),
       speed: 0.3 + pitchNorm * 0.5,  // deeper (slower) for bass, closer for treble
       phase: Math.random() * Math.PI * 2,
       thickness: 1.5 + (1 - pitchNorm) * 3,
@@ -79,9 +79,9 @@ export function renderLightFilaments(
     });
   }
 
-  // Update and render
+  // Update and render — use 'screen' blend to avoid white-out
   ctx.save();
-  ctx.globalCompositeOperation = 'lighter';
+  ctx.globalCompositeOperation = 'screen';
 
   for (let i = strands.length - 1; i >= 0; i--) {
     const s = strands[i];
@@ -119,30 +119,29 @@ export function renderLightFilaments(
     const last = s.points[s.points.length - 1];
     ctx.lineTo(last.x, last.y);
 
-    // Draw with glow — multiple passes for light filament effect
-    // Outer glow (wide, faint)
-    ctx.strokeStyle = `hsla(${s.hue}, ${s.saturation}%, ${s.lightness}%, ${alpha * 0.08})`;
-    ctx.lineWidth = s.thickness * 4;
+    // Outer glow (wide, very faint)
+    ctx.strokeStyle = `hsla(${s.hue}, ${s.saturation}%, ${s.lightness}%, ${alpha * 0.06})`;
+    ctx.lineWidth = s.thickness * 3.5;
     ctx.stroke();
 
     // Mid glow
-    ctx.strokeStyle = `hsla(${s.hue}, ${s.saturation + 10}%, ${s.lightness + 10}%, ${alpha * 0.18})`;
-    ctx.lineWidth = s.thickness * 2;
+    ctx.strokeStyle = `hsla(${s.hue}, ${Math.min(s.saturation + 8, 95)}%, ${Math.min(s.lightness + 5, 62)}%, ${alpha * 0.14})`;
+    ctx.lineWidth = s.thickness * 1.8;
     ctx.stroke();
 
-    // Core (bright, thin)
-    ctx.strokeStyle = `hsla(${s.hue}, 80%, ${s.lightness + 25}%, ${alpha * 0.35})`;
-    ctx.lineWidth = s.thickness * 0.8;
+    // Core (bright, thin) — capped at lightness 65
+    ctx.strokeStyle = `hsla(${s.hue}, 75%, ${Math.min(s.lightness + 10, 65)}%, ${alpha * 0.28})`;
+    ctx.lineWidth = s.thickness * 0.7;
     ctx.stroke();
   }
 
-  // Subtle scintillation dots along active filaments
+  // Subtle scintillation dots along active filaments — dimmed
   if (vol > 0.1 && strands.length > 0) {
     for (const s of strands) {
       const lifeRatio = s.lifePhase / (Math.PI * 2.5);
       if (lifeRatio < 0.1 || lifeRatio > 0.9) continue;
 
-      const dotCount = Math.floor(3 + vol * 10);
+      const dotCount = Math.floor(2 + vol * 8);
       for (let d = 0; d < dotCount; d++) {
         const t = Math.random();
         const idx = Math.floor(t * (s.points.length - 1));
@@ -152,11 +151,11 @@ export function renderLightFilaments(
         const dx = p0.x + (p1.x - p0.x) * frac;
         const dy = p0.y + (p1.y - p0.y) * frac;
 
-        const dotAlpha = 0.3 + Math.random() * 0.4;
-        const dotSize = 1 + Math.random() * 2;
+        const dotAlpha = 0.2 + Math.random() * 0.3;
+        const dotSize = 0.8 + Math.random() * 1.5;
         ctx.beginPath();
         ctx.arc(dx, dy, dotSize, 0, Math.PI * 2);
-        ctx.fillStyle = `hsla(${s.hue}, 100%, 85%, ${dotAlpha})`;
+        ctx.fillStyle = `hsla(${s.hue}, 90%, ${Math.min(s.lightness + 15, 68)}%, ${dotAlpha})`;
         ctx.fill();
       }
     }

@@ -55,7 +55,7 @@ export function renderStardust(
       life: 0,
       maxLife: 1.0 + Math.random() * 3.0,
       hue: h,
-      brightness: l + 15 + Math.random() * 25,
+      brightness: Math.min(l + 10 + Math.random() * 15, 60),
       sparkle: Math.random() * Math.PI * 2,
     });
   }
@@ -83,7 +83,7 @@ export function renderStardust(
         life: 0,
         maxLife: 0.6 + Math.random() * 2.0,
         hue: h + (Math.random() - 0.5) * 20,
-        brightness: l + 20 + Math.random() * 30,
+        brightness: Math.min(l + 12 + Math.random() * 18, 62),
         sparkle: Math.random() * Math.PI * 2,
       });
     }
@@ -110,7 +110,7 @@ export function renderStardust(
         life: 0,
         maxLife: 1.5 + Math.random() * 2.5,
         hue: h,
-        brightness: l + 5 + Math.random() * 20,
+        brightness: Math.min(l + 5 + Math.random() * 12, 55),
         sparkle: Math.random() * Math.PI * 2,
       });
     }
@@ -118,7 +118,7 @@ export function renderStardust(
 
   // Render
   ctx.save();
-  ctx.globalCompositeOperation = 'lighter';
+  ctx.globalCompositeOperation = 'screen';
 
   for (let i = stars.length - 1; i >= 0; i--) {
     const s = stars[i];
@@ -143,9 +143,9 @@ export function renderStardust(
 
     // Glow halo
     const glow = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.size * 3);
-    glow.addColorStop(0, `hsla(${s.hue}, 100%, ${s.brightness}%, ${sparkleAlpha})`);
-    glow.addColorStop(0.15, `hsla(${s.hue}, 80%, ${s.brightness - 5}%, ${sparkleAlpha * 0.6})`);
-    glow.addColorStop(0.5, `hsla(${s.hue}, 50%, ${s.brightness - 10}%, ${sparkleAlpha * 0.15})`);
+    glow.addColorStop(0, `hsla(${s.hue}, 90%, ${s.brightness}%, ${sparkleAlpha})`);
+    glow.addColorStop(0.15, `hsla(${s.hue}, 70%, ${Math.min(s.brightness - 3, 58)}%, ${sparkleAlpha * 0.5})`);
+    glow.addColorStop(0.5, `hsla(${s.hue}, 40%, ${Math.min(s.brightness - 8, 50)}%, ${sparkleAlpha * 0.12})`);
     glow.addColorStop(1, 'hsla(0, 0%, 0%, 0)');
 
     ctx.beginPath();
@@ -153,15 +153,15 @@ export function renderStardust(
     ctx.fillStyle = glow;
     ctx.fill();
 
-    // Core dot
+    // Core dot — capped at brightness 75
     ctx.beginPath();
     ctx.arc(s.x, s.y, coreSize, 0, Math.PI * 2);
-    ctx.fillStyle = `hsla(${s.hue}, 100%, ${Math.min(s.brightness + 15, 95)}%, ${sparkleAlpha * 1.2})`;
+    ctx.fillStyle = `hsla(${s.hue}, 95%, ${Math.min(s.brightness + 10, 75)}%, ${sparkleAlpha * 1.0})`;
     ctx.fill();
 
-    // Cross-shaped sparkle for brighter ones
+    // Cross-shaped sparkle for brighter ones — dimmed
     if (sparkleAlpha > 0.5 && Math.abs(Math.sin(s.sparkle)) > 0.7) {
-      ctx.strokeStyle = `hsla(${s.hue}, 100%, 90%, ${sparkleAlpha * 0.6})`;
+      ctx.strokeStyle = `hsla(${s.hue}, 85%, ${Math.min(s.brightness + 15, 72)}%, ${sparkleAlpha * 0.45})`;
       ctx.lineWidth = 0.5;
       ctx.beginPath();
       ctx.moveTo(s.x - s.size * 2, s.y);

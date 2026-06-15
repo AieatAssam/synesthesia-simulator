@@ -64,7 +64,7 @@ export function renderSmokeTrails(
 
   // Update and render
   ctx.save();
-  ctx.globalCompositeOperation = 'lighter';
+  ctx.globalCompositeOperation = 'screen';
 
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
@@ -89,8 +89,8 @@ export function renderSmokeTrails(
     // Smoke-like rendering: soft radial gradient
     const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
     const hueShift = Math.sin(p.life * 3 + p.x * 0.01) * 10;  // subtle color shimmer
-    grad.addColorStop(0, `hsla(${p.hue + hueShift}, ${p.saturation}%, ${p.lightness + 15}%, ${alpha * 0.35})`);
-    grad.addColorStop(0.4, `hsla(${p.hue}, ${p.saturation * 0.5}%, ${p.lightness}%, ${alpha * 0.15})`);
+    grad.addColorStop(0, `hsla(${p.hue + hueShift}, ${p.saturation}%, ${Math.min(p.lightness + 8, 60)}%, ${alpha * 0.28})`);
+    grad.addColorStop(0.4, `hsla(${p.hue}, ${p.saturation * 0.6}%, ${Math.min(p.lightness - 2, 55)}%, ${alpha * 0.12})`);
     grad.addColorStop(1, 'hsla(0, 0%, 0%, 0)');
 
     ctx.beginPath();
@@ -100,17 +100,17 @@ export function renderSmokeTrails(
 
     // "Ember" core — bright center for some particles
     if (Math.random() < 0.3 && lifeRatio < 0.5) {
-      const coreAlpha = alpha * 0.4;
+      const coreAlpha = alpha * 0.35;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.radius * 0.2, 0, Math.PI * 2);
-      ctx.fillStyle = `hsla(${p.hue}, 100%, 80%, ${coreAlpha})`;
+      ctx.fillStyle = `hsla(${p.hue}, 90%, ${Math.min(p.lightness + 15, 65)}%, ${coreAlpha})`;
       ctx.fill();
     }
   }
 
   // Flow lines — "waving lines... oscilloscope configurations... metallic" (Deni Simon)
-  ctx.globalAlpha = 0.25;
-  ctx.lineWidth = 1.2 + audio.volume * sens * 2;
+  ctx.globalAlpha = 0.18;
+  ctx.lineWidth = 1.0 + audio.volume * sens * 1.5;
   ctx.beginPath();
   const lineCount = 5;
   for (let l = 0; l < lineCount; l++) {
@@ -127,7 +127,7 @@ export function renderSmokeTrails(
     }
   }
   const lineHue = 200 + audio.centroid * 0.02;
-  ctx.strokeStyle = `hsla(${lineHue}, 40%, 50%, 0.15)`;
+  ctx.strokeStyle = `hsla(${lineHue}, 35%, 45%, 0.12)`;
   ctx.stroke();
 
   ctx.restore();

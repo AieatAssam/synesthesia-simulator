@@ -50,8 +50,9 @@ export function renderDriftShapes(
 
     // Reuter 2025: harmonicity drives saturation. More harmonic (flute, violin)
     // → more saturated. More percussive (drums, plucks) → less saturated, lighter.
-    const harmonicSatBoost = harmonicity * 25;
-    const percussiveLighten = percussive * 15;
+    // Lightness capped at 60 max to prevent bleaching under 'screen' blend.
+    const harmonicSatBoost = harmonicity * 20;
+    const percussiveLighten = percussive * 8;
 
     // Spatial mapping (Chiou 2013 + Ward 2006):
     // High pitch = higher in space (Ward 2006), bass = lower, grounded.
@@ -82,17 +83,18 @@ export function renderDriftShapes(
       life: 0,
       maxLife: 2.5 + Math.random() * 5.0 + vol * 3,
       hue: h,
-      saturation: Math.min(s + harmonicSatBoost, 100),
-      lightness: Math.min(l + 8 + centroidNorm * 10 + percussiveLighten, 90),
+      saturation: Math.min(s + harmonicSatBoost, 95),
+      lightness: Math.min(l + centroidNorm * 5 + percussiveLighten, 60),
       sides,
       pulse: Math.random() * Math.PI * 2,
       pulseSpeed: 1.5 + Math.random() * 3 + vol * 4,
     });
   }
 
-  // Render
+  // Render — use 'screen' blend instead of 'lighter' to avoid white-out.
+  // Screen: result = 1-(1-src)*(1-dst) — gentler additive, saturates without bleaching.
   ctx.save();
-  ctx.globalCompositeOperation = 'lighter';
+  ctx.globalCompositeOperation = 'screen';
 
   for (let i = shapes.length - 1; i >= 0; i--) {
     const sh = shapes[i];
@@ -120,30 +122,30 @@ export function renderDriftShapes(
     const pulseScale = 1 + Math.sin(sh.pulse) * 0.25;
     const currentSize = sh.size * pulseScale * (1 - lifeRatio * 0.25);
 
-    // Outer glow
+    // Outer glow (gentle)
     ctx.beginPath();
-    drawShape(ctx, sh.x, sh.y, currentSize * 1.4, sh.sides, sh.rotation);
-    ctx.strokeStyle = `hsla(${sh.hue}, ${sh.saturation}%, ${sh.lightness + 15}%, ${alpha * 0.12})`;
-    ctx.lineWidth = currentSize * 0.3;
+    drawShape(ctx, sh.x, sh.y, currentSize * 1.3, sh.sides, sh.rotation);
+    ctx.strokeStyle = `hsla(${sh.hue}, ${sh.saturation}%, ${sh.lightness + 5}%, ${alpha * 0.10})`;
+    ctx.lineWidth = currentSize * 0.25;
     ctx.stroke();
 
-    // Main shape stroke
+    // Main shape stroke — capped at lightness 65
     ctx.beginPath();
     drawShape(ctx, sh.x, sh.y, currentSize, sh.sides, sh.rotation);
-    ctx.strokeStyle = `hsla(${sh.hue}, ${sh.saturation + 10}%, ${sh.lightness + 20}%, ${alpha * 0.4})`;
-    ctx.lineWidth = 1.2 + alpha * 2;
+    ctx.strokeStyle = `hsla(${sh.hue}, ${Math.min(sh.saturation + 5, 95)}%, ${Math.min(sh.lightness + 8, 65)}%, ${alpha * 0.35})`;
+    ctx.lineWidth = 1.0 + alpha * 1.8;
     ctx.stroke();
 
-    // Fill
-    ctx.fillStyle = `hsla(${sh.hue}, ${sh.saturation}%, ${sh.lightness + 5}%, ${alpha * 0.08})`;
+    // Fill — very subtle, main purpose is to give the shape body
+    ctx.fillStyle = `hsla(${sh.hue}, ${sh.saturation}%, ${sh.lightness}%, ${alpha * 0.05})`;
     ctx.fill();
 
     // Inner shape for angular ones (echo of the "orange line in the middle")
     if (sh.sides >= 4 && alpha > 0.3) {
       ctx.beginPath();
       drawShape(ctx, sh.x, sh.y, currentSize * 0.45, sh.sides, sh.rotation + Math.PI / sh.sides);
-      ctx.strokeStyle = `hsla(${sh.hue + 15}, 60%, ${sh.lightness + 30}%, ${alpha * 0.25})`;
-      ctx.lineWidth = 0.6;
+      ctx.strokeStyle = `hsla(${sh.hue + 15}, 55%, ${Math.min(sh.lightness + 12, 68)}%, ${alpha * 0.18})`;
+      ctx.lineWidth = 0.5;
       ctx.stroke();
     }
   }

@@ -55,7 +55,7 @@ export function renderRippleField(
       life: 0,
       hue: h,
       saturation: s,
-      lightness: l + 10,
+      lightness: Math.min(l + 5, 58),
       lineWidth: 1.5 + Math.random() * 3,
     });
   }
@@ -74,7 +74,7 @@ export function renderRippleField(
       life: 0,
       hue: h,
       saturation: s,
-      lightness: l + 20,
+      lightness: Math.min(l + 8, 60),
       lineWidth: 1 + Math.random() * 2,
     });
   }
@@ -93,7 +93,7 @@ export function renderRippleField(
       life: 0,
       hue: h,
       saturation: s + 5,
-      lightness: l + 30,
+      lightness: Math.min(l + 12, 62),
       lineWidth: 0.5 + Math.random() * 1.2,
     });
   }
@@ -115,15 +115,15 @@ export function renderRippleField(
         life: 0,
         hue: h,
         saturation: s + 15,
-        lightness: l + 30,
+        lightness: Math.min(l + 12, 62),
         lineWidth: 1.5 + Math.random() * 3,
       });
     }
   }
 
-  // Render
+  // Render — use 'screen' blend to avoid white-out
   ctx.save();
-  ctx.globalCompositeOperation = 'lighter';
+  ctx.globalCompositeOperation = 'screen';
 
   for (let i = ripples.length - 1; i >= 0; i--) {
     const r = ripples[i];
@@ -133,24 +133,23 @@ export function renderRippleField(
     r.radius += dt * r.maxRadius * 0.25 * (1 + centroidNorm * 0.5);
 
     const alphaMul = r.life < 0.5 ? r.life * 2 : 2 - r.life * 2;
-    // Timbre affects alpha: brighter sounds = slightly more defined rings
-    const alpha = alphaMul * (0.18 + centroidNorm * 0.10);
+    const alpha = alphaMul * (0.14 + centroidNorm * 0.08);
     const lw = r.lineWidth * (1 - r.life * 0.6);
 
-    // Main ring
+    // Main ring — capped at lightness 62
     ctx.beginPath();
     ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
-    ctx.strokeStyle = `hsla(${r.hue}, ${r.saturation}%, ${r.lightness}%, ${alpha})`;
+    ctx.strokeStyle = `hsla(${r.hue}, ${r.saturation}%, ${Math.min(r.lightness, 62)}%, ${alpha})`;
     ctx.lineWidth = lw;
     ctx.stroke();
 
-    // Echo ring (gap)
+    // Echo ring (subtle inner ring — reduced prominence)
     const echoR = r.radius * 0.65;
-    if (echoR > 3) {
+    if (echoR > 3 && alphaMul > 0.3) {
       ctx.beginPath();
       ctx.arc(r.x, r.y, echoR, 0, Math.PI * 2);
-      ctx.strokeStyle = `hsla(${r.hue + 20}, ${r.saturation - 15}%, ${r.lightness + 10}%, ${alpha * 0.35})`;
-      ctx.lineWidth = lw * 0.4;
+      ctx.strokeStyle = `hsla(${r.hue + 20}, ${Math.max(r.saturation - 10, 20)}%, ${Math.min(r.lightness + 3, 64)}%, ${alpha * 0.25})`;
+      ctx.lineWidth = lw * 0.3;
       ctx.stroke();
     }
 
@@ -158,9 +157,9 @@ export function renderRippleField(
     if (audio.spreadNorm > 0.4 && r.life < 0.6) {
       ctx.beginPath();
       ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
-      ctx.strokeStyle = `hsla(${r.hue + 30}, 50%, ${r.lightness + 15}%, ${alpha * 0.2 * audio.spreadNorm})`;
+      ctx.strokeStyle = `hsla(${r.hue + 30}, 45%, ${Math.min(r.lightness + 5, 64)}%, ${alpha * 0.15 * audio.spreadNorm})`;
       ctx.setLineDash([2, 4 + r.life * 6]);
-      ctx.lineWidth = lw * 0.6;
+      ctx.lineWidth = lw * 0.5;
       ctx.stroke();
       ctx.setLineDash([]);
     }
