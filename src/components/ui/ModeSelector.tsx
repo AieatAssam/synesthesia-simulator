@@ -7,10 +7,11 @@ interface Props {
 }
 
 const MODES: { value: VisualParams['mode']; label: string }[] = [
-  { value: 'full', label: 'Full Experience' },
-  { value: 'aurora', label: 'Aurora' },
-  { value: 'oscilloscope', label: 'Oscilloscope' },
-  { value: 'particles', label: 'Fireworks' },
+  { value: 'full', label: 'Full Field' },
+  { value: 'ripples', label: 'Ripples' },
+  { value: 'smoke', label: 'Smoke' },
+  { value: 'stardust', label: 'Stardust' },
+  { value: 'shapes', label: 'Shapes' },
 ];
 
 export function ModeSelector({ mode, onChange, disabled }: Props) {

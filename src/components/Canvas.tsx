@@ -62,22 +62,27 @@ export function Canvas({ active, mode, sensitivity, palette }: Props) {
     if (width === 0 || height === 0) return;
 
     const audio = audioEngine.getSnapshot();
-    if (!audio) return;
+
+    // Persistence: alpha 0.025 means trails last ~40 frames (~660ms at 60fps).
+    // Synesthetes describe colors persisting while sound continues and fading gradually
+    // when it stops — this creates visible, evolving trails.
+    ctx.fillStyle = 'rgba(5, 5, 10, 0.025)';
+    ctx.fillRect(0, 0, width, height);
+
+    // Silence gate: when no meaningful audio, just let the canvas fade.
+    // Even the noise floor should produce some response — use a very low threshold.
+    if (!audio || audio.volume < 0.002) return;
 
     const params: VisualParams = { mode, sensitivity, palette, width, height };
 
-    // PERSISTENCE: gentle clearing creates trails and afterimages.
-    // Synesthetic experiences persist while sound continues and fade gradually.
-    // alpha=0.05 means elements last ~20 frames (330ms at 60fps) — visible trails.
-    ctx.fillStyle = 'rgba(5, 5, 10, 0.05)';
-    ctx.fillRect(0, 0, width, height);
+    const showAll = mode === 'full';
 
-    // Unified visual field — all layers paint into the same space.
-    // Back to front: ripples (deepest) → shapes → smoke → stardust (surface)
-    renderRippleField(ctx, audio, params, dt);
-    renderDriftShapes(ctx, audio, params, dt);
-    renderSmokeTrails(ctx, audio, params, dt);
-    renderStardust(ctx, audio, params, dt);
+    // Back to front render order. Each layer checks silence internally
+    // via the already-verified audio.volume.
+    if (showAll || mode === 'ripples') renderRippleField(ctx, audio, params, dt);
+    if (showAll || mode === 'shapes') renderDriftShapes(ctx, audio, params, dt);
+    if (showAll || mode === 'smoke') renderSmokeTrails(ctx, audio, params, dt);
+    if (showAll || mode === 'stardust') renderStardust(ctx, audio, params, dt);
   }, active);
 
   return (

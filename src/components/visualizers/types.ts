@@ -11,7 +11,7 @@ export interface AudioData {
 }
 
 export interface VisualParams {
-  mode: 'full' | 'aurora' | 'oscilloscope' | 'particles';
+  mode: 'full' | 'ripples' | 'shapes' | 'smoke' | 'stardust';
   sensitivity: number;     // 0–1, onset detection threshold
   palette: PaletteName;
   width: number;
