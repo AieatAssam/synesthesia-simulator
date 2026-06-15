@@ -5,13 +5,16 @@ export interface AudioData {
   centroid: number;
   onsets: number[];
   lowEnergy: number;
+  midEnergy: number;
+  highEnergy: number;
   flatness: number;
+  spreadNorm: number;
   fftSize: number;
   sampleRate: number;
 }
 
 export interface VisualParams {
-  mode: 'full' | 'ripples' | 'shapes' | 'smoke' | 'stardust';
+  mode: 'full' | 'ripples' | 'shapes' | 'smoke' | 'stardust' | 'filaments';
   sensitivity: number;     // 0–1, onset detection threshold
   palette: PaletteName;
   width: number;

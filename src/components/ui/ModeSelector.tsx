@@ -11,6 +11,7 @@ const MODES: { value: VisualParams['mode']; label: string }[] = [
   { value: 'ripples', label: 'Ripples' },
   { value: 'smoke', label: 'Smoke' },
   { value: 'stardust', label: 'Stardust' },
+  { value: 'filaments', label: 'Filaments' },
   { value: 'shapes', label: 'Shapes' },
 ];
 

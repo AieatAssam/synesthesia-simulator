@@ -1,19 +1,20 @@
-// DriftShapes — persistent 3D-positioned geometric/organic shapes that drift and rotate with music.
-// Grounded in synesthete accounts from Savickaite et al. (2023):
-// - "big yellow shape and then like a sort of orange line in the middle" (P1)
+// DriftShapes — persistent 3D-positioned geometric/organic shapes that drift and rotate.
+// Grounded in:
+// - "big yellow shape... orange line in the middle" (P1, Savickaite 2023)
 // - "sideways eye shape in the middle" (P2)
-// - "the general like hard shape" (P2)
-// - "3D shapes moving up or down depending on pitch" (P4, Experiment 1)
-// - "I'm able to use like a 3D space rather than trying to draw something on a piece of paper" (P2)
-// - Shapes were often the first thing described, before color or size (P2)
+// - "3D shapes moving up or down depending on pitch" (P4)
+// - Chiou et al. (2013): synesthetes see geometric objects at SPECIFIC spatial locations
+// - Ward et al. (2006): high pitch = higher in space, brighter
 //
-// Also: Kandinsky — sound translated into abstract forms (lines, circles, colored shapes in motion)
+// ENRICHMENT: Timbre-responsive shapes. Low centroid (dark timbre) = rounder, fewer sides.
+// High centroid (bright timbre) = more angular, sharper geometry.
+// Automatically maps to the timbre accounts (Ellington: trumpet=dark blue, alto sax=light blue satin)
 
 import type { AudioData, VisualParams } from './types';
 import type { DriftShape } from './persistence';
 import { freqToHue } from './persistence';
 
-const MAX_SHAPES = 25;
+const MAX_SHAPES = 30;
 const shapes: DriftShape[] = [];
 let lastSpawnTime = 0;
 
@@ -27,136 +28,140 @@ export function renderDriftShapes(
   const cx = width / 2;
   const cy = height / 2;
   const sens = Math.max(0.3, sensitivity);
+  const vol = audio.volume * sens;
+  const centroidNorm = Math.min(audio.centroid / 4000, 1);
+  const spreadNorm = audio.spreadNorm;
 
-  // Spawn shapes on sustained notes — not just onsets
-  const volume = audio.volume * sens;
-  const spawnInterval = 0.15 / (volume + 0.05); // faster spawn at higher volume
+  // Spawn based on sustained energy — more spawns from mid energy (body of sound)
+  const spawnInterval = 0.12 / (vol + 0.04);
   lastSpawnTime += dt;
 
-  if (lastSpawnTime > spawnInterval && volume > 0.03) {
+  // Also spawn from onsets
+  const onsetSpawn = audio.onsets.length > 0 && vol > 0.06;
+
+  if (lastSpawnTime > spawnInterval || onsetSpawn) {
     lastSpawnTime = 0;
 
-    const freq = findPeakFreq(audio);
+    const freq = onsetSpawn ? audio.onsets[0] : findPeakFreq(audio);
     const { h, s, l } = freqToHue(freq, palette);
+    const pitchNorm = Math.min(freq / 4000, 1);
 
-    // Position: pitch maps to vertical position (higher pitch = higher on screen)
-    // following Ward et al. (2006): high pitch = higher in space
-    const pitchNorm = Math.min(freq / 3000, 1);
-    const px = cx + (Math.random() - 0.5) * width * 0.7;
-    const py = cy - height * 0.3 + pitchNorm * height * 0.6;
+    // Spatial mapping (Chiou 2013 + Ward 2006):
+    // Bass = bottom center, Mid = spread horizontally, Treble = upper edges
+    // Pitch maps to Y, stereo-like positioning from frequency bin index
+    const px = cx + (pitchNorm - 0.5) * width * 0.5 + (Math.random() - 0.5) * width * 0.2;
+    const py = cy - height * 0.3 + pitchNorm * height * 0.55 + (Math.random() - 0.5) * 20;
 
-    // Higher pitches = smaller, sharper shapes
-    const size = (10 + Math.random() * 50) * (1 - pitchNorm * 0.6) + volume * 30;
-    const sides = Math.random() < 0.3 ? 0 // circle
-      : Math.random() < 0.4 ? 3 // triangle
-      : Math.random() < 0.5 ? 4 // diamond
-      : Math.random() < 0.5 ? 5 // star/pentagon
-      : 6; // hexagon
+    // Timbre-responsive shape selection:
+    // Low centroid (dark) → rounder (circle/oval, 0 sides)
+    // Mid centroid → intermediate (triangle, diamond)
+    // High centroid (bright) → angular (pentagon, hexagon, star)
+    // High spread (noisy spectrum) → fewer sides (organic, simple)
+    const angularity = centroidNorm * (1 - spreadNorm * 0.5); // 0=round, 1=angular
+    const sides = angularity < 0.2 ? 0  // circle
+      : angularity < 0.4 ? 3  // triangle
+      : angularity < 0.6 ? 4  // diamond
+      : angularity < 0.8 ? 5  // pentagon
+      : 6 + Math.floor(Math.random() * 3); // hexagon+
+
+    const size = (12 + Math.random() * 45) * (1 - pitchNorm * 0.5) + vol * 25;
 
     shapes.push({
       x: px, y: py,
       size,
       rotation: Math.random() * Math.PI * 2,
-      rotSpeed: (Math.random() - 0.5) * 2 + volume * 3,
+      rotSpeed: (Math.random() - 0.5) * 1.5 + centroidNorm * 3,
       life: 0,
-      maxLife: 2.0 + Math.random() * 5.0 + volume * 4,
+      maxLife: 2.5 + Math.random() * 5.0 + vol * 3,
       hue: h,
       saturation: s,
-      lightness: l + 10,
+      lightness: l + 8 + centroidNorm * 10,
       sides,
       pulse: Math.random() * Math.PI * 2,
-      pulseSpeed: 1.5 + Math.random() * 3 + volume * 5,
+      pulseSpeed: 1.5 + Math.random() * 3 + vol * 4,
     });
   }
 
-  // Update and render
+  // Render
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
 
   for (let i = shapes.length - 1; i >= 0; i--) {
     const sh = shapes[i];
     sh.life += dt;
-    if (sh.life >= sh.maxLife) {
-      shapes.splice(i, 1);
-      continue;
-    }
+    if (sh.life >= sh.maxLife) { shapes.splice(i, 1); continue; }
 
-    // Slow drift + gentle oscillation
-    sh.y += dt * (5 + Math.sin(sh.life * 0.7) * 8);
-    sh.x += dt * Math.cos(sh.life * 0.5) * 6;
+    // Parallax drift: deeper shapes (bass, low pitch) move slower
+    const pitchNorm = Math.min(sh.hue > 180 ? 0.3 : 0.7, 1);
+    const driftSpeed = 0.3 + pitchNorm * 0.7;
+    sh.y += dt * Math.sin(sh.life * 0.6) * 6 * driftSpeed;
+    sh.x += dt * Math.cos(sh.life * 0.4) * 4 * driftSpeed;
     sh.rotation += sh.rotSpeed * dt;
     sh.pulse += sh.pulseSpeed * dt;
 
     const lifeRatio = sh.life / sh.maxLife;
-    const alpha = lifeRatio < 0.15
-      ? lifeRatio / 0.15  // fade in
-      : lifeRatio > 0.7
-        ? 1 - (lifeRatio - 0.7) / 0.3  // fade out
-        : 1;  // hold
+    const alpha = lifeRatio < 0.12
+      ? lifeRatio / 0.12
+      : lifeRatio > 0.65
+        ? 1 - (lifeRatio - 0.65) / 0.35
+        : 1;
 
-    // Pulse size
-    const pulseScale = 1 + Math.sin(sh.pulse) * 0.2;
-    const currentSize = sh.size * pulseScale * (1 - lifeRatio * 0.3);
+    const pulseScale = 1 + Math.sin(sh.pulse) * 0.25;
+    const currentSize = sh.size * pulseScale * (1 - lifeRatio * 0.25);
 
-    // Draw shape
+    // Outer glow
     ctx.beginPath();
-    if (sh.sides === 0) {
-      ctx.arc(sh.x, sh.y, currentSize, 0, Math.PI * 2);
-    } else {
-      for (let j = 0; j < sh.sides; j++) {
-        const a = sh.rotation + (j / sh.sides) * Math.PI * 2 - Math.PI / 2;
-        const r = currentSize;
-        const sx = sh.x + Math.cos(a) * r;
-        const sy = sh.y + Math.sin(a) * r;
-        if (j === 0) ctx.moveTo(sx, sy);
-        else ctx.lineTo(sx, sy);
-      }
-      ctx.closePath();
-    }
-
-    // Stroke with glow
-    ctx.strokeStyle = `hsla(${sh.hue}, ${sh.saturation}%, ${sh.lightness + 20}%, ${alpha * 0.6})`;
-    ctx.lineWidth = 1.5 + alpha * 2;
+    drawShape(ctx, sh.x, sh.y, currentSize * 1.4, sh.sides, sh.rotation);
+    ctx.strokeStyle = `hsla(${sh.hue}, ${sh.saturation}%, ${sh.lightness + 15}%, ${alpha * 0.12})`;
+    ctx.lineWidth = currentSize * 0.3;
     ctx.stroke();
 
-    // Fill with soft transparency
-    ctx.fillStyle = `hsla(${sh.hue}, ${sh.saturation}%, ${sh.lightness}%, ${alpha * 0.12})`;
+    // Main shape stroke
+    ctx.beginPath();
+    drawShape(ctx, sh.x, sh.y, currentSize, sh.sides, sh.rotation);
+    ctx.strokeStyle = `hsla(${sh.hue}, ${sh.saturation + 10}%, ${sh.lightness + 20}%, ${alpha * 0.4})`;
+    ctx.lineWidth = 1.2 + alpha * 2;
+    ctx.stroke();
+
+    // Fill
+    ctx.fillStyle = `hsla(${sh.hue}, ${sh.saturation}%, ${sh.lightness + 5}%, ${alpha * 0.08})`;
     ctx.fill();
 
-    // Inner glow for smaller concentric shape
-    if (sh.sides >= 4) {
+    // Inner shape for angular ones (echo of the "orange line in the middle")
+    if (sh.sides >= 4 && alpha > 0.3) {
       ctx.beginPath();
-      if (sh.sides === 0) {
-        ctx.arc(sh.x, sh.y, currentSize * 0.5, 0, Math.PI * 2);
-      } else {
-        for (let j = 0; j < sh.sides; j++) {
-          const a = sh.rotation + (j / sh.sides) * Math.PI * 2 - Math.PI / 2;
-          const sx = sh.x + Math.cos(a) * currentSize * 0.5;
-          const sy = sh.y + Math.sin(a) * currentSize * 0.5;
-          if (j === 0) ctx.moveTo(sx, sy);
-          else ctx.lineTo(sx, sy);
-        }
-        ctx.closePath();
-      }
-      ctx.strokeStyle = `hsla(${sh.hue + 10}, ${sh.saturation}, ${sh.lightness + 30}%, ${alpha * 0.3})`;
-      ctx.lineWidth = 0.8;
+      drawShape(ctx, sh.x, sh.y, currentSize * 0.45, sh.sides, sh.rotation + Math.PI / sh.sides);
+      ctx.strokeStyle = `hsla(${sh.hue + 15}, 60%, ${sh.lightness + 30}%, ${alpha * 0.25})`;
+      ctx.lineWidth = 0.6;
       ctx.stroke();
     }
   }
 
   ctx.restore();
-
   while (shapes.length > MAX_SHAPES) shapes.shift();
+}
+
+function drawShape(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, sides: number, rot: number): void {
+  if (sides === 0) {
+    // Slightly elliptical for organic feel
+    ctx.ellipse(x, y, r, r * 0.85, rot, 0, Math.PI * 2);
+  } else {
+    for (let j = 0; j < sides; j++) {
+      const a = rot + (j / sides) * Math.PI * 2 - Math.PI / 2;
+      const sx = x + Math.cos(a) * r;
+      const sy = y + Math.sin(a) * r;
+      if (j === 0) ctx.moveTo(sx, sy);
+      else ctx.lineTo(sx, sy);
+    }
+    ctx.closePath();
+  }
 }
 
 function findPeakFreq(audio: AudioData): number {
   if (audio.onsets.length > 0) return audio.onsets[0];
   let maxAmp = 0, maxIdx = 0;
   for (let i = 0; i < audio.frequencies.length; i++) {
-    if (audio.frequencies[i] > maxAmp) {
-      maxAmp = audio.frequencies[i];
-      maxIdx = i;
-    }
+    if (audio.frequencies[i] > maxAmp) { maxAmp = audio.frequencies[i]; maxIdx = i; }
   }
   return maxAmp > 10 ? (maxIdx * audio.sampleRate) / audio.fftSize : 440;
 }

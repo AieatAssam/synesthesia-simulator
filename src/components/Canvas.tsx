@@ -6,6 +6,7 @@ import { renderRippleField } from './visualizers/rippleField';
 import { renderSmokeTrails } from './visualizers/smokeTrails';
 import { renderStardust } from './visualizers/stardustField';
 import { renderDriftShapes } from './visualizers/driftShapes';
+import { renderLightFilaments } from './visualizers/lightFilaments';
 
 interface Props {
   active: boolean;
@@ -63,25 +64,21 @@ export function Canvas({ active, mode, sensitivity, palette }: Props) {
 
     const audio = audioEngine.getSnapshot();
 
-    // Persistence: alpha 0.025 means trails last ~40 frames (~660ms at 60fps).
-    // Synesthetes describe colors persisting while sound continues and fading gradually
-    // when it stops — this creates visible, evolving trails.
+    // Persistence: gentle clearing for long trails
     ctx.fillStyle = 'rgba(5, 5, 10, 0.025)';
     ctx.fillRect(0, 0, width, height);
 
-    // Silence gate: when no meaningful audio, just let the canvas fade.
-    // Even the noise floor should produce some response — use a very low threshold.
+    // Silence gate
     if (!audio || audio.volume < 0.002) return;
 
     const params: VisualParams = { mode, sensitivity, palette, width, height };
-
     const showAll = mode === 'full';
 
-    // Back to front render order. Each layer checks silence internally
-    // via the already-verified audio.volume.
+    // Render back to front. New filament mode added.
     if (showAll || mode === 'ripples') renderRippleField(ctx, audio, params, dt);
     if (showAll || mode === 'shapes') renderDriftShapes(ctx, audio, params, dt);
     if (showAll || mode === 'smoke') renderSmokeTrails(ctx, audio, params, dt);
+    if (showAll || mode === 'filaments') renderLightFilaments(ctx, audio, params, dt);
     if (showAll || mode === 'stardust') renderStardust(ctx, audio, params, dt);
   }, active);
 

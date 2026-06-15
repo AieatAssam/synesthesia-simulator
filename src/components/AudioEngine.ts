@@ -81,11 +81,33 @@ export class AudioEngine {
     }
     const centroid = totalAmp > 0 ? weightedSum / totalAmp : 0;
 
-    // Low-frequency energy (for background layer)
-    const lowBins = Math.floor(bins * 0.08);
+    // Low-frequency energy (bass — <250Hz, for ground/gravity effects)
+    const lowBins = Math.floor(bins * 0.06);
     let lowSum = 0;
     for (let i = 0; i < lowBins; i++) lowSum += freqBuf[i];
     const lowEnergy = Math.min(lowSum / (lowBins * 255) * 2 * gain, 1);
+
+    // Mid-frequency energy (250Hz–2kHz, for body/presence)
+    const midStart = Math.floor(bins * 0.06);
+    const midEnd = Math.floor(bins * 0.45);
+    let midSum = 0;
+    for (let i = midStart; i < midEnd; i++) midSum += freqBuf[i];
+    const midEnergy = Math.min(midSum / ((midEnd - midStart) * 255) * 1.5 * gain, 1);
+
+    // High-frequency energy (>2kHz, for sparkle/air)
+    const highStart = Math.floor(bins * 0.45);
+    let highSum = 0;
+    for (let i = highStart; i < bins; i++) highSum += freqBuf[i];
+    const highEnergy = Math.min(highSum / ((bins - highStart) * 255) * 1.5 * gain, 1);
+
+    // Spectral spread (variance around centroid — texture indicator)
+    let spreadSum = 0;
+    for (let i = 0; i < bins; i++) {
+      const freq = (i * sampleRate) / fftSize;
+      spreadSum += freqBuf[i] * (freq - centroid) * (freq - centroid);
+    }
+    const spread = totalAmp > 0 ? Math.sqrt(spreadSum / totalAmp) : 0;
+    const spreadNorm = Math.min(spread / (sampleRate / 4), 1); // normalize to 0-1
 
     // Spectral flatness
     let geoSum = 0;
@@ -130,7 +152,10 @@ export class AudioEngine {
       centroid,
       onsets,
       lowEnergy,
+      midEnergy,
+      highEnergy,
       flatness,
+      spreadNorm,
       fftSize,
       sampleRate,
     };
