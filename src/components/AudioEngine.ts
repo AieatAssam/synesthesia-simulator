@@ -25,7 +25,7 @@ export class AudioEngine {
     this.analyser = this.ctx.createAnalyser();
     this.analyser.fftSize = 4096;
     this.analyser.smoothingTimeConstant = 0.55;
-    this.analyser.minDecibels = -85;
+    this.analyser.minDecibels = -60;
     this.analyser.maxDecibels = -10;
     this.source.connect(this.analyser);
     this.freqData = new Uint8Array(this.analyser.frequencyBinCount);
@@ -68,7 +68,8 @@ export class AudioEngine {
       sumSq += v * v;
     }
     const rms = Math.sqrt(sumSq / timeBuf.length);
-    const volume = Math.min(rms * 3, 1);
+    const gain = Math.max(0.2, this.sensitivity);
+    const volume = Math.min(rms * 3 * gain, 1);
 
     // Spectral centroid (timbre indicator)
     let weightedSum = 0;
@@ -84,7 +85,7 @@ export class AudioEngine {
     const lowBins = Math.floor(bins * 0.08);
     let lowSum = 0;
     for (let i = 0; i < lowBins; i++) lowSum += freqBuf[i];
-    const lowEnergy = Math.min(lowSum / (lowBins * 255) * 2, 1);
+    const lowEnergy = Math.min(lowSum / (lowBins * 255) * 2 * gain, 1);
 
     // Spectral flatness
     let geoSum = 0;
@@ -102,15 +103,14 @@ export class AudioEngine {
       : 0;
 
     // Onset detection
-    const energy = rms;
-    this.energyHistory.push(energy);
+    this.energyHistory.push(volume);
     if (this.energyHistory.length > 30) this.energyHistory.shift();
     const avgEnergy = this.energyHistory.reduce((a, b) => a + b, 0) / this.energyHistory.length;
-    const threshold = 0.15 / this.sensitivity;
-    const onsetDelta = energy - avgEnergy;
+    const onsetDelta = volume - avgEnergy;
+    const onsetThreshold = 0.06;
 
     const onsets: number[] = [];
-    if (onsetDelta > threshold && this.energyHistory.length > 10) {
+    if (onsetDelta > onsetThreshold && this.energyHistory.length > 10) {
       let maxBin = 0;
       let maxAmp = 0;
       for (let i = 0; i < bins; i++) {
