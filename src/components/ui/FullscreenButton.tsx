@@ -21,8 +21,9 @@ export function FullscreenButton() {
   return (
     <button
       onClick={toggle}
-      className="rounded-lg border border-white/10 bg-white/5 p-2 text-muted-foreground
-        hover:border-white/20 hover:text-foreground transition-all min-h-[36px] min-w-[36px]"
+      className="inline-flex items-center justify-center rounded-lg border border-white/10
+        bg-white/5 text-muted-foreground hover:border-white/20 hover:text-foreground
+        transition-all h-11 w-11"
       aria-label={isFull ? 'Exit fullscreen' : 'Enter fullscreen'}
     >
       {isFull ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}

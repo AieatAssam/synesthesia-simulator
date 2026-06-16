@@ -8,8 +8,9 @@ export function InfoPanel() {
     <>
       <button
         onClick={() => setOpen(!open)}
-        className="rounded-lg border border-white/10 bg-white/5 p-2 text-muted-foreground
-          hover:border-white/20 hover:text-foreground transition-all min-h-[44px] min-w-[44px]"
+        className="inline-flex items-center justify-center rounded-lg border border-white/10
+          bg-white/5 text-muted-foreground hover:border-white/20 hover:text-foreground
+          transition-all h-11 w-11"
         aria-label="About synesthesia"
       >
         <Info className="h-4 w-4" />
@@ -21,7 +22,8 @@ export function InfoPanel() {
           <div className="relative bg-card border border-border rounded-2xl p-5 sm:p-6 max-w-md w-full max-h-[80vh] overflow-y-auto shadow-2xl">
             <button
               onClick={() => setOpen(false)}
-              className="absolute top-3 right-3 text-muted-foreground hover:text-foreground min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="absolute top-3 right-3 inline-flex items-center justify-center
+                text-muted-foreground hover:text-foreground h-11 w-11"
               aria-label="Close"
             >
               <X className="h-4 w-4" />

@@ -23,7 +23,8 @@ export function PaletteSelector({ palette, onChange, disabled }: Props) {
           onClick={() => onChange(p.value)}
           disabled={disabled}
           className={`
-          flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-all min-h-[44px]
+            inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium
+            transition-all min-h-[44px]
             ${palette === p.value
               ? 'border-primary/50 bg-primary/10 text-primary'
               : 'border-white/10 bg-white/5 text-muted-foreground hover:border-white/20'
