@@ -13,9 +13,9 @@ export function MicButton({ active, loading, onStart, onStop }: Props) {
       onClick={active ? onStop : onStart}
       disabled={loading}
       className={`
-        flex items-center justify-center gap-2 rounded-2xl px-8 py-4
-        text-base font-semibold transition-all duration-300
-        min-h-[56px] min-w-[200px] select-none
+        flex items-center justify-center gap-2 rounded-2xl px-6 sm:px-8 py-3.5 sm:py-4
+        text-sm sm:text-base font-semibold transition-all duration-300
+        min-h-[56px] w-full sm:w-auto select-none
         ${active
           ? 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 active:scale-95'
           : 'bg-primary/20 text-primary border border-primary/30 hover:bg-primary/30 active:scale-95'

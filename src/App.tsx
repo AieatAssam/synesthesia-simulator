@@ -78,12 +78,13 @@ export default function App() {
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Header */}
-      <header className="shrink-0 border-b border-white/5 px-4 py-2.5 flex items-center justify-between">
+      <header className="shrink-0 border-b border-white/5 px-4 py-3 flex items-center justify-between"
+        style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top, 0px))' }}>
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-primary" />
-          <span className="text-sm font-semibold">Virtual Synesthesia</span>
+          <Sparkles className="h-5 w-5 text-primary" />
+          <span className="text-sm sm:text-base font-semibold truncate">Virtual Synesthesia</span>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 shrink-0">
           <InfoPanel />
           <FullscreenButton />
         </div>
@@ -119,13 +120,14 @@ export default function App() {
       </div>
 
       {/* Controls */}
-      <div className="shrink-0 border-t border-white/5 px-4 py-3 space-y-3">
-        <div className="flex items-center justify-center gap-3">
+      <div className="shrink-0 border-t border-white/5 px-4 pt-3 pb-4 sm:pb-3 space-y-3"
+        style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0px))' }}>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
           <MicButton active={active} loading={loading} onStart={handleStart} onStop={handleStop} />
           <TestToneButton active={testActive} loading={testLoading} onStart={handleTestStart} onStop={handleTestStop} />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           <ModeSelector mode={mode} onChange={setMode} disabled={active} />
           <SensitivitySlider value={sensitivity} onChange={handleSensitivity} disabled={false} />
           <PaletteSelector palette={palette} onChange={setPalette} disabled={false} />

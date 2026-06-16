@@ -39,14 +39,18 @@ Three competing (but not mutually exclusive) theories explain chromesthesia:
 
 | Finding | Source | Implementation |
 |---------|--------|----------------|
-| Pitch classes follow a rainbow (do=red → si=violet) | Itoh et al. (2017) *Scientific Reports* | HSL hue mapped to log(frequency), 20Hz–20kHz → 0°–270° |
-| Higher pitch = brighter colors (universal, not just synesthetes) | Ward et al. (2006) *Cortex* | HSL lightness increases with frequency |
-| Higher pitch classes = less saturated colors | Itoh et al. (2017) | HSL saturation decreases above 2kHz |
-| Sound evokes "firework shapes" that arise, move, and fade | Cytowic (1989, 2009) | Onset-triggered particle bursts with physics |
-| Music produces "oscilloscope-like waving metallic lines with depth" | Deni Simon (via Cytowic) | Waveform layer with gradient "metallic" strokes |
-| "Light filament architecture" and "kaleidoscope" structures | Tori Amos (2005) | Geometric symmetry overlay during complex harmony |
-| Background forms: tunnels, spirals, honeycombs, gratings | Klüver (1926) form constants | Slow atmospheric background layer |
-| Timbre (instrument quality) modulates color independently of pitch | Ellington, Bernstein, Liszt accounts | Spectral centroid drives palette warmth, harmonic structure affects texture |
+| Pitch classes follow a rainbow (do=red → si=violet) | Itoh et al. (2017) *Scientific Reports* | HSL hue mapped to log(frequency) |
+| Higher pitch = brighter colors (universal) | Ward et al. (2006) *Cortex* | HSL lightness increases with frequency |
+| Higher pitch = higher in visual space | Ward et al. (2006); Koenig et al. (2026) | Pitch→Y position across all spatial layers |
+| Shapes appear at specific spatial locations | Chiou et al. (2013) *Cortex* | DriftShapes placed at frequency-mapped positions |
+| Timbre (harmonicity) drives color saturation | Reuter et al. (2025) *Frontiers in Psychology* | Harmonicity→saturation boost; percussive→lightness |
+| VR reveals texture + movement + 3D are essential | Savickaite et al. (2023) *i-Perception* | Five-layer unified visual field with persistence |
+| "Stars in your eyes… electric bits" | P1, Savickaite 2023 | Stardust sparkle particles, 8–20Hz flicker |
+| "Pulsating outwards… gravitational vacuum" | P1, Savickaite 2023 | RippleField concentric rings + central glow |
+| "Smoke, cloudiness, embers" | P1, P2 — Savickaite 2023 | SmokeTrails soft radial blob particles |
+| "Light filament architecture" | Tori Amos (2005) | LightFilaments Bézier strands, 3-pass glow |
+| "Waving oscilloscope lines… metallic with depth" | Deni Simon (via Cytowic) | SmokeTrails flow lines, LightFilaments strands |
+| Background form constants (tunnels, spirals) | Klüver (1926) | RippleField concentric patterns |
 
 ---
 
@@ -72,13 +76,15 @@ Described his orchestra as a painter's palette: trumpet = "dark blue," alto saxo
 ## Features
 
 - 🎤 **Live microphone** input via Web Audio API — no pre-recorded audio needed
-- 🌈 **Research-backed color mapping** — frequency→hue using Itoh rainbow theory
-- 🎆 **5 visual layers** simulating different aspects of chromesthetic experience
-- 📱 **Mobile-first design** — touch-friendly controls, adaptive rendering quality
-- 🎨 **Multiple color palettes** — Synesthete (research), Warm, Cool, Neon, Monochrome
-- 🔬 **Built-in science reference** — info panel explaining the research behind each visual element
-- 🖥️ **Fullscreen immersive mode** — for phones and desktop
-- ⚡ **60fps rendering** on desktop, adaptive to 30fps minimum on mobile
+- 🎵 **Synthetic test tone** — sawtooth oscillator with LFO sweep (80→4000Hz), no mic required
+- 🌈 **Research-backed color mapping** — frequency→hue using Itoh rainbow theory, timbre→saturation via Reuter (2025)
+- 🎆 **5 visual layers** — RippleField, DriftShapes, SmokeTrails, Stardust, LightFilaments
+- 📱 **Mobile-first design** — 44px touch targets, safe-area padding, stacked buttons on narrow screens
+- 🎨 **5 color palettes** — Synesthete (research), Warm, Cool, Neon, Monochrome
+- 🔊 **7 audio features** — spectral centroid, harmonicity, percussive loudness, spectral spread, energy bands, onset detection, RMS volume
+- 🔬 **Built-in science reference** — info panel with research citations for every visual element
+- 🖥️ **Fullscreen immersive mode**
+- ⚡ **60fps rendering** on desktop, adaptive on mobile
 - 🌐 **Pure frontend** — no backend, no API keys, works offline after load
 
 ---
@@ -110,19 +116,22 @@ getByteFrequencyData  getByteTimeDomainData  RMS/Spectral Analysis
 ```
 requestAnimationFrame loop
     ↓
-AudioEngine.getSnapshot() → AudioData { frequencies, waveform, volume, centroid, onsets, lowEnergy }
+AudioEngine.getSnapshot() → AudioData { frequencies, waveform, volume, centroid, onsets,
+                                         lowEnergy, midEnergy, highEnergy, flatness,
+                                         spreadNorm, harmonicity, percussive }
     ↓
-┌────────────────────────────────────────────────┐
-│  UNIFIED VISUAL FIELD (persistent, evolving)    │
-│                                                 │
-│  Render back → front:                           │
-│  Layer 1: RippleField     ← expanding rings     │
-│  Layer 2: DriftShapes     ← 3D-positioned forms │
-│  Layer 3: SmokeTrails     ← cloud/ember texture │
-│  Layer 4: Stardust        ← sparkle particles   │
-└────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────┐
+│  UNIFIED VISUAL FIELD (persistent, evolving)        │
+│                                                     │
+│  Render back → front:                               │
+│  Layer 1: RippleField     ← expanding rings         │
+│  Layer 2: DriftShapes     ← 3D-positioned forms     │
+│  Layer 3: SmokeTrails     ← cloud/ember texture     │
+│  Layer 4: LightFilaments  ← Bézier light strands    │
+│  Layer 5: Stardust        ← sparkle particles       │
+└────────────────────────────────────────────────────┘
     ↓
-Single Canvas2D — gentle clearing (α=0.05) for persistent trails
+Single Canvas2D — gentle clearing (α=0.025) for persistent trails (~660ms at 60fps)
 ```
 
 ### Technology Stack
@@ -144,7 +153,7 @@ The visual style (gradients, lines, particles, geometric shapes) maps naturally 
 
 ## Visual Layers
 
-All layers paint into a **single unified visual field** with persistence. The canvas clears at alpha=0.05 per frame — elements leave visible trails lasting ~20 frames (330ms at 60fps). This captures the synesthetic quality of colors that "persist while sound continues and fade when sound stops."
+All layers paint into a **single unified visual field** with persistence. The canvas clears at alpha=0.025 per frame — elements leave visible trails lasting ~660ms at 60fps. This captures the synesthetic quality of colors that "persist while sound continues and fade when sound stops."
 
 ### Design Philosophy
 
@@ -158,30 +167,38 @@ Grounded in **Savickaite et al. (2023)**: synesthetes using VR to draw their exp
 | "Big yellow shape... orange line in the middle" | DriftShapes persistent polygons with inner strokes | P1, Savickaite 2023 |
 | "3D shapes moving up or down depending on pitch" | DriftShapes vertical position mapped to frequency | P4, Savickaite 2023 |
 | "Shimmering" / "sparkly" / "electric bits" | Stardust cross-shaped sparkles with 8-20Hz flicker | P1, Savickaite 2023 |
+| "Light filament... architecture of color-and-light" | LightFilaments Bézier strands with 3-pass glow | Tori Amos (2005) |
+| "Lines moving in color... metallic with depth" | SmokeTrails flow lines + LightFilaments strands | Deni Simon |
 
 ### Layer 1: RippleField — "Gravitational Vacuum"
 
-Expanding concentric rings triggered by audio energy and onsets. Each ring has a hue mapped to its dominant frequency and fades gradually. A central radial glow pulses with low-frequency energy. Captures the Klüver form constants (tunnels, spirals) and P1's "gravitational vacuum" quality.
+Expanding concentric rings triggered by audio energy across bass/mid/treble bands. Each ring's hue maps to its frequency. A central radial glow pulses with low-frequency energy. Bass ripples spawn lower on screen, treble ripples higher. Onset bursts create concentrated ring clusters.
 
-**Research basis:** Klüver (1926) form constants; P1's descriptions of "pulsating outwards as if it's churning round" and "in the middle it's slower, on the outside it moves a lot more" (Savickaite et al. 2023).
+**Research basis:** Klüver (1926) form constants; P1's descriptions of "pulsating outwards as if it's churning round" and "in the middle it's slower, on the outside it moves a lot more" (Savickaite et al. 2023). Ward et al. (2006) for pitch→spatial position.
 
 ### Layer 2: DriftShapes — "3D Shapes Moving in Space"
 
-Persistent geometric shapes (circles, triangles, diamonds, pentagons) that appear at frequency-mapped positions, drift slowly, rotate, and pulse. Pitch maps to vertical position (higher pitch = higher on screen) per Ward et al. (2006). Shapes persist for 2–10 seconds, fading in/out with hold period.
+Persistent geometric shapes (circles, triangles, diamonds, pentagons, hexagons) placed at frequency-mapped positions. Pitch maps to Y (high pitch = higher on screen per Ward 2006). Spectral centroid controls angularity: dark timbre = round shapes, bright timbre = angular. Harmonicity boosts saturation (Reuter 2025). Shapes drift visibly (40–140 px/sec), rotate, and pulse. Lifetime 2–10 seconds.
 
-**Research basis:** P1's "big yellow shape and then like a sort of orange line in the middle"; P2's "sideways eye shape" and "general like hard shape"; P4's "three-dimensional shapes specific to the instrument" (Savickaite et al. 2023). Kandinsky's abstract forms in motion.
+**Research basis:** Chiou et al. (2013) — synesthetes see specific geometric objects at specific locations. P1's "big yellow shape... orange line in the middle"; P2's "sideways eye shape"; P4's "3D shapes specific to the instrument" (Savickaite et al. 2023). Ellington's instrument→color mappings (trumpet=dark blue). Reuter (2025) for harmonicity→saturation.
 
 ### Layer 3: SmokeTrails — Cloud & Ember Texture
 
-Soft radial-gradient blob particles that drift, slow down, and fade. Each particle uses a radial gradient from bright core to transparent edge, creating smoke/cloud visual quality. Some particles feature bright "ember" cores. Flow lines trace curved paths with metallic styling. Particle spawning is weighted by frequency amplitude — louder bins produce more particles.
+Soft radial-gradient blob particles that drift outward, slow down, and fade. Weighted frequency-amplitude spawning. Ember cores glow at particle centers. Flow lines trace curved metallic paths per Deni Simon's account. Uses 'screen' blend mode to prevent white-out while maintaining additive glow.
 
-**Research basis:** P1's "this smoke will actually come in really helpful because a lot of my synaesthesia looks kind of like that," "embers would still be going over the top," "a little bit fuzzy"; P2's "smokiness" and "cloudiness" descriptions; Deni Simon's "waving lines — like oscilloscope configurations — lines moving in color, often metallic" (Savickaite et al. 2023; Cytowic 1989).
+**Research basis:** P1's "this smoke will actually come in really helpful," "embers would still be going over the top," "a little bit fuzzy"; P2's "smokiness" and "cloudiness" (Savickaite et al. 2023). Deni Simon's "waving lines — like oscilloscope configurations... metallic."
 
-### Layer 4: Stardust — "Stars in Your Eyes"
+### Layer 4: LightFilaments — "Architecture of Color-and-Light"
 
-**Hypersensitive** sparkle particles that spawn even at very low volumes. Three spawning modes: ambient (always present, ~1-25 particles/frame), onset bursts (concentrated explosions of 30+ particles), and low-frequency swirls (orbital stardust near center). Each particle has a bright core, radial glow halo, and cross-shaped sparkle with fast flicker (8–20Hz oscillation).
+Bézier-curved luminous strands that spawn on onsets and sustained loud sections. Each strand has 8–20 control points that drift and oscillate. Three-pass glow rendering: wide faint halo → mid glow → bright thin core. Scintillation dots travel along active strands. Parallax depth: bass strands move slower (deeper), treble faster (closer). Screen blend prevents bleaching.
 
-**Research basis:** P1's "stars in your eyes" and "I never got to represent my experiences so clearly" (on the stars brush); "yellow and sparkly" for birdsong; "electric bits" for plucked guitar; Cytowic's "something like fireworks" (Savickaite et al. 2023; Cytowic 1989, 2009).
+**Research basis:** Tori Amos (2005): "The song appears as light filament once I've cracked it... architecture of color-and-light. I've never seen the same light creature in my life." Deni Simon: "lines moving in color, often metallic with height, width, and, most importantly, depth."
+
+### Layer 5: Stardust — "Stars in Your Eyes"
+
+**Hypersensitive** sparkle particles that spawn even at very low volumes. Three spawning modes: ambient (always present, ~1-25/frame), onset bursts (concentrated explosions), and low-frequency swirls (orbital stardust near center). Each particle has a bright core, radial glow halo, and cross-shaped sparkle with 8–20Hz flicker. Brightness capped at 75 to prevent white-out under screen blend.
+
+**Research basis:** P1's "stars in your eyes" and "I never got to represent my experiences so clearly"; "yellow and sparkly" for birdsong; "electric bits" for guitar; Cytowic's "something like fireworks" (Savickaite et al. 2023; Cytowic 1989, 2009).
 
 ---
 
@@ -248,11 +265,12 @@ npm run preview
 ### Usage
 
 1. Open the app in a browser
-2. Tap "Start Microphone" and grant permission
-3. Make sounds — speak, clap, play music, whistle
+2. Tap **"Start Microphone"** and grant permission, or tap **"Test Tone"** for synthetic audio
+3. Make sounds — speak, clap, play music, whistle — or let the test tone sweep
 4. Watch the canvas respond in real-time
-5. Switch between visualization modes and color palettes
-6. Tap fullscreen for immersive mode
+5. Toggle layers via the mode selector (Full Field, Ripples, Shapes, Smoke, Filaments, Stardust)
+6. Adjust sensitivity and color palette
+7. Tap fullscreen for immersive mode
 
 ### Browser Support
 
@@ -291,15 +309,17 @@ virtual-synesthesia/
 │   │   ├── Canvas.tsx              ← rAF render loop, layer composition
 │   │   ├── visualizers/
 │   │   │   ├── types.ts            ← Shared AudioData, VisualParams interfaces
-│   │   │   ├── colorMapping.ts     ← Frequency→HSL mapping, palette presets
-│   │   │   ├── backgroundLayer.ts  ← Klüver form constants renderer
-│   │   │   ├── auroraLayer.ts      ← Frequency spectrum rainbow band
-│   │   │   ├── waveformLayer.ts    ← Oscilloscope metallic lines
-│   │   │   ├── particleLayer.ts    ← Onset-triggered firework particles
-│   │   │   └── kaleidoscopeLayer.ts← Geometric symmetry overlay
+│   │   │   ├── persistence.ts      ← Shared types (Ripple, DriftShape, etc.) + freqToHue
+│   │   │   ├── rippleField.ts      ← Klüver form constants, concentric rings
+│   │   │   ├── driftShapes.ts      ← 3D-positioned geometric shapes
+│   │   │   ├── smokeTrails.ts      ← Cloud/ember particles + flow lines
+│   │   │   ├── lightFilaments.ts   ← Bézier light strands with glow
+│   │   │   ├── stardustField.ts    ← Sparkle particles with scintillation
+│   │   │   └── colorMapping.ts     ← Frequency→HSL mapping, palette presets
 │   │   └── ui/
 │   │       ├── MicButton.tsx       ← Start/stop microphone
-│   │       ├── ModeSelector.tsx    ← Visualization mode toggle
+│   │       ├── TestToneButton.tsx  ← Synthetic oscillator test
+│   │       ├── ModeSelector.tsx    ← Layer toggle buttons
 │   │       ├── SensitivitySlider.tsx
 │   │       ├── PaletteSelector.tsx ← Color palette chooser
 │   │       ├── InfoPanel.tsx       ← Science reference + research citations
@@ -320,11 +340,13 @@ virtual-synesthesia/
 2. Hubbard, E.M. & Ramachandran, V.S. (2005). "Neurocognitive mechanisms of synesthesia." *Neuron*, 48(3):509-520.
 3. Ward, J., Huckstep, B. & Tsakanikos, E. (2006). "Sound-colour synaesthesia: to what extent does it use cross-modal mechanisms common to us all?" *Cortex*, 42(2):264-280.
 4. Itoh, K., Sakata, H., Kwee, I.L. & Nakada, T. (2017). "Musical pitch classes have rainbow hues in pitch class-color synesthesia." *Scientific Reports*.
-5. Itoh, K. & Nakada, T. (2018). "Absolute pitch is not necessary for pitch class-color synesthesia."
-6. Cao, Y. & Ueda, S. (2025). "One- or two-step? New insights into two-step hypothesis and rainbow-like theory for pitch class-color synesthesia."
-7. Niccolai, V., Jennes, J., Stoerig, P. & Van Leeuwen, T.M. (2012). Study on voice-related chromesthesia.
-8. Simner, J. et al. (2006). Prevalence study. *Perception*.
-9. **Savickaite, S., McNaughton, D., Gaigalas, R., & Ward, J. (2023).** "Using immersive virtual reality to recreate the synaesthetic experience." *i-Perception*, 14(3). [PMC10478570](https://pmc.ncbi.nlm.nih.gov/articles/PMC10478570/) — participants drew their synesthetic experiences in 3D VR; revealed critical importance of texture, movement, and persistence.
+5. Chiou, R., Stelter, M., & Rich, A.N. (2013). "Beyond colour perception: Auditory–visual synaesthesia induces experiences of geometric objects in specific locations." *Cortex*, 49(6).
+6. **Savickaite, S., McNaughton, D., Gaigalas, R., & Ward, J. (2023).** "Using immersive virtual reality to recreate the synaesthetic experience." *i-Perception*, 14(3). [PMC10478570](https://pmc.ncbi.nlm.nih.gov/articles/PMC10478570/)
+7. **Reuter, C., Siddiq, S., Jewanski, J., Oehler, M., & Czedik-Eysenberg, I. (2025).** "Rainbows in my ears — Synesthetic color perception with partial-reduced and morphed musical instrument timbres." *Frontiers in Psychology*, 16:1697918.
+8. **Koenig, S., et al. (2026).** "Sound frequency predicts the bodily location of auditory-induced tactile sensations in synesthetic and ordinary perception." *Neuroscience of Consciousness*, niaf064.
+9. Cao, Y. & Ueda, S. (2025). Follow-up on two-step hypothesis and rainbow-like theory.
+10. Niccolai, V., Jennes, J., Stoerig, P. & Van Leeuwen, T.M. (2012). Study on voice-related chromesthesia.
+11. Simner, J. et al. (2006). Prevalence study. *Perception*.
 
 ### Books
 - Cytowic, R.E. (1989). *Synesthesia: A Union of the Senses*.

@@ -6,7 +6,7 @@ interface Props {
 
 export function SensitivitySlider({ value, onChange, disabled }: Props) {
   return (
-    <div className="flex items-center gap-3 min-h-[36px]">
+    <div className="flex items-center gap-3 min-h-[44px]">
       <span className="text-xs text-muted-foreground w-20 shrink-0">Sensitivity</span>
       <input
         type="range"
